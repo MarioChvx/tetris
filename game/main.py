@@ -1,11 +1,11 @@
 
-from class_Table import Table, Figure
+from Figure import Figure
 
 def main():
-    t = Table()
-    print(t)
+    # t = Table()
+    # print(t)
     f = Figure()
-    print(f.kind)
+    print(f)
 
 if __name__ == '__main__':
     main()
