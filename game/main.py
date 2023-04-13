@@ -1,12 +1,15 @@
 
 import pygame
+import sys
 from Tetrimino import Tetrimino
 
-SQUARE_SIZE = 40
+
 GAME_SURF = pygame.Surface(GAME_SIZE := (400, 800))
+SQUARE_SIZE = GAME_SIZE[0] // 10
 # returns a surface the size of the screen
 DISPLAY_SURF = pygame.display.set_mode(DISPLAY_SIZE := (408, 900))
-FPS = 10
+FPS = 15
+
 
 def main():
     clock = pygame.time.Clock()
@@ -17,13 +20,15 @@ def main():
         clock.tick(FPS)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                # print('exit event')
+                pygame.quit()
+                sys.exit()
                 run = False
-        keys_pressed = pygame.key.get_pressed()
-        tetri_movement(keys_pressed, piece)
+            tetri_controls(event, piece)
+
         draw_window(piece)
 
     pygame.quit()
+
 
 def draw_window(tetri: Tetrimino):
     GAME_SURF.fill(pygame.Color('black'))
@@ -32,23 +37,20 @@ def draw_window(tetri: Tetrimino):
     DISPLAY_SURF.blit(GAME_SURF, (4, 4))
     pygame.display.update()
 
-def tetri_movement(keys_pressed, tetri: Tetrimino):
 
-    if keys_pressed[pygame.K_a] and tetri.min_x - SQUARE_SIZE >= 0:
-        tetri.move_left()
-
-    if keys_pressed[pygame.K_d] and tetri.max_x + SQUARE_SIZE <= GAME_SIZE[0] - SQUARE_SIZE * tetri.width:
-        tetri.move_right()
-
-    if keys_pressed[pygame.K_s] and tetri.max_y + SQUARE_SIZE <= GAME_SIZE[1] - SQUARE_SIZE * tetri.height:
-        tetri.move_down()
-
-    if keys_pressed[pygame.K_w] and tetri.min_y - SQUARE_SIZE >= 0:
-        tetri.move_up()
-
-    if keys_pressed[pygame.K_r]:
-        tetri.rotate()
-
+def tetri_controls(event, tetri):
+    if event.type == pygame.KEYDOWN:
+        if event.key in [pygame.K_LEFT, ord('a')] \
+        and tetri.min_x - SQUARE_SIZE >= 0:
+            tetri.move_left()
+        if event.key in [pygame.K_RIGHT, ord('d')] \
+        and tetri.max_x + SQUARE_SIZE <= GAME_SIZE[0]:
+            tetri.move_right()
+        if event.key in [pygame.K_DOWN, ord('s')] \
+        and tetri.max_y + SQUARE_SIZE <= GAME_SIZE[1]:
+            tetri.move_down()
+        if event.key in [pygame.K_UP, ord('w')]:
+            tetri.rotate()
 
 
 if __name__ == '__main__':

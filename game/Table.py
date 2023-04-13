@@ -1,5 +1,7 @@
+
 import numpy as np 
-class Table:
+
+class PlayField:
 
     '''
     Tetris has a 40 x 10 table where only 20 rows are visible for the player.
