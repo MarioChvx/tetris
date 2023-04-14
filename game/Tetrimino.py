@@ -36,26 +36,6 @@ class Tetrimino:
          [1, 1, 1],
          [0, 0, 0]]
 
-    # O = [[1, 1],
-    #      [1, 1]]
-
-    # S = [[0, 1, 1],
-    #      [1, 1, 0]]
-
-    # Z = [[1, 1, 0],
-    #      [0, 1, 1]]
-
-    # L = [[0, 0, 1],
-    #      [1, 1, 1]]
-
-    # J = [[1, 0, 0],
-    #      [1, 1, 1]]
-
-    # I = [[1, 1, 1, 1]]
-
-    # T = [[0, 1, 0],
-    #      [1, 1, 1]]
-
     kinds = [I, O, T, S, Z, J, L]
     colors = [
         (000, 255, 255, 255), # cyan
@@ -67,6 +47,7 @@ class Tetrimino:
         (255, 165, 000, 255), # orange
         ]
 
+
     def __init__(self, square_size):
         self.square_size = square_size
         self.shape_type = (random.randint(1, 100) * time.time_ns()) % len(Tetrimino.kinds)
@@ -75,15 +56,22 @@ class Tetrimino:
         self.idx = Idx(0, 0)
         self.min_cart = Cart(0, 0)
         self.rects = self.define_rects()
+        self.min_cart = None
+        self.max_cart = None
         self.calculate_limits()
+        self.center_Tetrimino()
+
+
+    def center_Tetrimino(self):
+        n = len(self.matrix)
+        self.move_right((10 - n) // 2)
+
 
     def calculate_limits(self):
-        """Will calculate the coordinate limits of the shape, not real ones """
         tops = [rect.top for rect in self.rects]
         left = [rect.left for rect in self.rects]
         self.min_cart = Cart(min(left), min(tops))
         self.max_cart = Cart( max(left) + self.square_size, max(tops) + self.square_size)
-        print(self.min_cart, self.max_cart)
 
 
     def define_rects(self):
@@ -99,6 +87,7 @@ class Tetrimino:
             y += self.square_size
         return rects
 
+
     def move_left(self, units = 1):
         self.idx.x -= units
         total_move = units * self.square_size
@@ -106,7 +95,7 @@ class Tetrimino:
         self.max_cart.x -= total_move
         for square in self.rects:
             square.x -= total_move
-        print(self.min_cart, self.max_cart)
+
 
     def move_right(self, units = 1):
         self.idx.x += units
@@ -115,7 +104,7 @@ class Tetrimino:
         self.max_cart.x += total_move
         for square in self.rects:
             square.x += total_move
-        print(self.min_cart, self.max_cart)
+
 
     def move_down(self, units = 1):
         self.idx.y += units
@@ -124,7 +113,7 @@ class Tetrimino:
         self.max_cart.y += total_move
         for square in self.rects:
             square.y += total_move
-        print(self.min_cart, self.max_cart)
+
 
     def move_up(self, units = 1):
         self.idx.y -= units
@@ -133,12 +122,10 @@ class Tetrimino:
         self.max_cart.y -= total_move
         for square in self.rects:
             square.y -= total_move
-        print(self.min_cart, self.max_cart)
+
 
     def rotate(self, times = 1):
         self.matrix = np.rot90(self.matrix, times)
-        print(self.matrix)
-
         self.rects = self.define_rects()
         self.calculate_limits()
 
@@ -152,6 +139,7 @@ class Tetrimino:
                 width = 3,
                 border_radius = 5
             )
+
 
     def __str__(self):
         return str([str(row) + f'\n' for row in self.matrix])

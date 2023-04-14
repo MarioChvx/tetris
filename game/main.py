@@ -2,7 +2,7 @@
 import pygame
 import sys
 from Tetrimino import Tetrimino
-
+from Coordinates import Cartesian as Cart
 
 GAME_SURF = pygame.Surface(GAME_SIZE := (400, 800))
 SQUARE_SIZE = GAME_SIZE[0] // 10
@@ -10,11 +10,13 @@ SQUARE_SIZE = GAME_SIZE[0] // 10
 DISPLAY_SURF = pygame.display.set_mode(DISPLAY_SIZE := (408, 900))
 FPS = 15
 
+PIECES = list()
+BOTTOM = None
 
 def main():
     clock = pygame.time.Clock()
-    piece = Tetrimino(SQUARE_SIZE)
     run = True
+    PIECES.append(Tetrimino(SQUARE_SIZE))
 
     while run:
         clock.tick(FPS)
@@ -23,9 +25,12 @@ def main():
                 run = False
                 pygame.quit()
                 sys.exit()
-            tetri_controls(event, piece)
+            tetri_controls(event, PIECES[-1])
 
-        draw_window(piece)
+        draw_window(PIECES[-1])
+
+        if touch_floor(PIECES[-1]):
+            reset_tetri()
 
     pygame.quit()
 
@@ -51,8 +56,24 @@ def tetri_controls(event, tetri):
             tetri.move_down()
         if event.key in [pygame.K_UP, ord('w')]:
             tetri.rotate()
-            # tetri.rotate(times = -1)
+            rotation_kick(tetri)
 
+def rotation_kick(tetri):
+    limit_x = GAME_SIZE[0]
+    limit_y = GAME_SIZE[1]
+    if tetri.min_cart.x < 0:
+        tetri.move_right(abs(tetri.min_cart.x // SQUARE_SIZE))
+    if tetri.max_cart.x > limit_x:
+        tetri.move_left((tetri.max_cart.x - limit_x) // SQUARE_SIZE)
+    if tetri.max_cart.y > limit_y:
+        tetri.move_up((tetri.max_cart.y - limit_y) // SQUARE_SIZE)
+
+def touch_floor(tetri):
+    return tetri.max_cart.y == GAME_SIZE[1]
+
+def reset_tetri():
+    PIECES.pop()
+    PIECES.append(Tetrimino(SQUARE_SIZE))
 
 if __name__ == '__main__':
     main()
