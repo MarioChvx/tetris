@@ -9,7 +9,6 @@ class PlayField:
     '''
 
     def __init__(self, width, height, ):
-        self.colors = [[''] * width] * height
         self.occupied = np.zeros((width, height))
         self.positions = np.zeros((width, height))
 

@@ -20,9 +20,9 @@ def main():
         clock.tick(FPS)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                run = False
                 pygame.quit()
                 sys.exit()
-                run = False
             tetri_controls(event, piece)
 
         draw_window(piece)
@@ -41,13 +41,13 @@ def draw_window(tetri: Tetrimino):
 def tetri_controls(event, tetri):
     if event.type == pygame.KEYDOWN:
         if event.key in [pygame.K_LEFT, ord('a')] \
-        and tetri.min_x - SQUARE_SIZE >= 0:
+        and tetri.min_cart.x - SQUARE_SIZE >= 0:
             tetri.move_left()
         if event.key in [pygame.K_RIGHT, ord('d')] \
-        and tetri.max_x + SQUARE_SIZE <= GAME_SIZE[0]:
+        and tetri.max_cart.x + SQUARE_SIZE <= GAME_SIZE[0]:
             tetri.move_right()
         if event.key in [pygame.K_DOWN, ord('s')] \
-        and tetri.max_y + SQUARE_SIZE <= GAME_SIZE[1]:
+        and tetri.max_cart.y + SQUARE_SIZE <= GAME_SIZE[1]:
             tetri.move_down()
         if event.key in [pygame.K_UP, ord('w')]:
             tetri.rotate()
