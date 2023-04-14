@@ -51,6 +51,7 @@ def tetri_controls(event, tetri):
             tetri.move_down()
         if event.key in [pygame.K_UP, ord('w')]:
             tetri.rotate()
+            # tetri.rotate(times = -1)
 
 
 if __name__ == '__main__':

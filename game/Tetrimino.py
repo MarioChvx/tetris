@@ -72,41 +72,30 @@ class Tetrimino:
         self.shape_type = (random.randint(1, 100) * time.time_ns()) % len(Tetrimino.kinds)
         self.matrix = np.array(Tetrimino.kinds[self.shape_type])
         self.color = Tetrimino.colors[self.shape_type]
-        # the position where is going to be draw in a matrix
         self.idx = Idx(0, 0)
-        # real position to be render
         self.min_cart = Cart(0, 0)
-        # self.width = np.any(np.array(self.matrix) == 1, axis=0).sum()
-        # self.height = np.any(np.array(self.matrix) == 1, axis=1).sum()
-        # self.max_cart = Cart(self.width * self.square_size, self.height * self.square_size)
         self.rects = self.define_rects()
         self.calculate_limits()
 
     def calculate_limits(self):
         """Will calculate the coordinate limits of the shape, not real ones """
-        # min idx x position
-        # first_column_with_1 = np.min(np.where(np.any(self.matrix == 1, axis = 0)))
-        # columns_with_all_0 = np.where(np.all(self.matrix == 0, axis = 0))
-        # print(first_column_with_1, columns_with_all_0)
-        # ## check how many void columns are before the first column with a 1 in it
-        # void_column_before_1 = np.sum(columns_with_all_0 < first_column_with_1)
-        # print(void_column_before_1)
         tops = [rect.top for rect in self.rects]
         left = [rect.left for rect in self.rects]
-        self.min_cart = Cart(min(tops), min(left))
-        self.max_cart = Cart(max(tops) + self.square_size, max(left) + self.square_size)
+        self.min_cart = Cart(min(left), min(tops))
+        self.max_cart = Cart( max(left) + self.square_size, max(tops) + self.square_size)
         print(self.min_cart, self.max_cart)
 
 
     def define_rects(self):
         rects = list()
-        x, y = self.min_cart.x, self.min_cart.y
+        min_x, min_y = self.idx.x * self.square_size, self.idx.y * self.square_size
+        x, y = min_x, min_y
         for row in self.matrix:
             for square in row:
                 if square == 1:
                     rects.append(pygame.Rect(x, y, self.square_size, self.square_size))
                 x += self.square_size
-            x = self.min_cart.x
+            x = min_x
             y += self.square_size
         return rects
 
@@ -135,6 +124,7 @@ class Tetrimino:
         self.max_cart.y += total_move
         for square in self.rects:
             square.y += total_move
+        print(self.min_cart, self.max_cart)
 
     def move_up(self, units = 1):
         self.idx.y -= units
@@ -143,11 +133,11 @@ class Tetrimino:
         self.max_cart.y -= total_move
         for square in self.rects:
             square.y -= total_move
+        print(self.min_cart, self.max_cart)
 
     def rotate(self, times = 1):
         self.matrix = np.rot90(self.matrix, times)
-        self.width = np.any(np.array(self.matrix) == 1, axis=0).sum()
-        self.height = np.any(np.array(self.matrix) == 1, axis=1).sum()
+        print(self.matrix)
 
         self.rects = self.define_rects()
         self.calculate_limits()
