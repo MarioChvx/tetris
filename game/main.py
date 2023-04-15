@@ -3,6 +3,7 @@ import pygame
 import sys
 from Tetrimino import Tetrimino
 from Coordinates import Cartesian as Cart
+from Bottom import Bottom
 
 GAME_SURF = pygame.Surface(GAME_SIZE := (400, 800))
 SQUARE_SIZE = GAME_SIZE[0] // 10
@@ -11,12 +12,12 @@ DISPLAY_SURF = pygame.display.set_mode(DISPLAY_SIZE := (408, 900))
 FPS = 15
 
 PIECES = list()
-BOTTOM = None
 
 def main():
     clock = pygame.time.Clock()
     run = True
     PIECES.append(Tetrimino(SQUARE_SIZE))
+    bott = Bottom(SQUARE_SIZE)
 
     while run:
         clock.tick(FPS)
@@ -27,18 +28,19 @@ def main():
                 sys.exit()
             tetri_controls(event, PIECES[-1])
 
-        draw_window(PIECES[-1])
+        draw_window(PIECES[-1], bott)
 
         if touch_floor(PIECES[-1]):
-            reset_tetri()
+            reset_tetri(bott)
 
     pygame.quit()
 
 
-def draw_window(tetri: Tetrimino):
+def draw_window(tetri: Tetrimino, bottom: Bottom):
     GAME_SURF.fill(pygame.Color('black'))
     DISPLAY_SURF.fill(pygame.Color('gray'))
     tetri.draw(GAME_SURF)
+    bottom.draw(GAME_SURF)
     DISPLAY_SURF.blit(GAME_SURF, (4, 4))
     pygame.display.update()
 
@@ -71,7 +73,8 @@ def rotation_kick(tetri):
 def touch_floor(tetri):
     return tetri.max_cart.y == GAME_SIZE[1]
 
-def reset_tetri():
+def reset_tetri(bottom: Bottom):
+    bottom.add_rects(PIECES[-1].rects)
     PIECES.pop()
     PIECES.append(Tetrimino(SQUARE_SIZE))
 
