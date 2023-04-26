@@ -9,7 +9,7 @@ class PlayField:
     '''
 
     def __init__(self, width=10, height=20):
-        self.matrix = np.zeros((width, height))
+        self.matrix = np.zeros((width, height)).astype(int)
         self.bottom = list()
 
     def calculate_bottom_coors(self):
@@ -23,4 +23,4 @@ class PlayField:
         pass
 
     def __str__(self):
-        return str([str(row) + '\n' for row in self.matrix])
+        return ''.join([f'{row}\r\n' for row in self.matrix])

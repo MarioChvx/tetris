@@ -49,14 +49,14 @@ class Tetrimino:
     def __init__(self):
         self.shape_type = (
                 random.randint(1, 100) * time.time_ns()) % len(Tetrimino.kinds)
-        self.matrix = np.array(Tetrimino.kinds[self.shape_type])
+        self.matrix = np.array(Tetrimino.kinds[self.shape_type]).astype(int)
         self.color = Tetrimino.colors[self.shape_type]
         self.idx = {'x': 0, 'y': 0}
         self.coors = self.calculate_coors()
 
     def calculate_coors(self):
         res = list()
-        x, y = self.coors['x'], self.coors['y']
+        x, y = self.idx['x'], self.idx['y']
         for i, row in enumerate(self.matrix):
             for j, number in enumerate(row):
                 if number == 1:
