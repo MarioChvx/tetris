@@ -4,6 +4,16 @@ import numpy as np
 
 
 class Tetrimino:
+    """ The shape that spawns at the top of the game
+
+    Atributes:
+        shape_type  An index that represents that represents the figure.
+        matrix      Numpy array that has the representation of the figure.
+        color       It depends on the shape_type.
+        idx         The position of the top-left cornner.
+        coor        Coordinates of each square from the figure.
+        border      The max bottom and rigth coordinates.
+    """
 
     s = [[1]]
 
