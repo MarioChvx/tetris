@@ -47,7 +47,6 @@ class Tetrimino:
         (255, 165, 000, 255), # orange
         ]
 
-
     def __init__(self, square_size):
         self.square_size = square_size
         self.shape_type = (random.randint(1, 100) * time.time_ns()) % len(Tetrimino.kinds)
