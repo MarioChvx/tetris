@@ -87,7 +87,6 @@ class Tetrimino:
             y += self.square_size
         return rects
 
-
     def move_left(self, units = 1):
         self.idx.x -= units
         total_move = units * self.square_size
@@ -96,8 +95,7 @@ class Tetrimino:
         for square in self.rects:
             square.x -= total_move
 
-
-    def move_right(self, units = 1):
+    def move_right(self, units=1):
         self.idx.x += units
         total_move = units * self.square_size
         self.min_cart.x += total_move
@@ -105,8 +103,7 @@ class Tetrimino:
         for square in self.rects:
             square.x += total_move
 
-
-    def move_down(self, units = 1):
+    def move_down(self, units=1):
         self.idx.y += units
         total_move = units * self.square_size
         self.min_cart.y += total_move
@@ -114,8 +111,7 @@ class Tetrimino:
         for square in self.rects:
             square.y += total_move
 
-
-    def move_up(self, units = 1):
+    def move_up(self, units=1):
         self.idx.y -= units
         total_move = units * self.square_size
         self.min_cart.y -= total_move
@@ -123,23 +119,20 @@ class Tetrimino:
         for square in self.rects:
             square.y -= total_move
 
-
-    def rotate(self, times = 1):
+    def rotate(self, times=1):
         self.matrix = np.rot90(self.matrix, times)
         self.rects = self.define_rects()
         self.calculate_limits()
 
-
     def draw(self, draw_surf: pygame.Surface):
         for rect in self.rects:
             pygame.draw.rect(
-                surface = draw_surf,
-                color = self.color,
-                rect = rect,
-                width = 3,
-                border_radius = 5
+                surface=draw_surf,
+                color=self.color,
+                rect=rect,
+                width=3,
+                border_radius=5
             )
 
-
     def __str__(self):
-        return str([str(row) + f'\n' for row in self.matrix])
+        return str([str(row) + '\n' for row in self.matrix])
