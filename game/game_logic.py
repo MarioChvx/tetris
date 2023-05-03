@@ -1,5 +1,6 @@
 from objs import PlayField
 from objs import Tetrimino
+import copy
 
 
 def print_plafield(pf: PlayField, te: Tetrimino):
@@ -27,8 +28,16 @@ def tetrimino_actions(action: str, times: int, te: Tetrimino, pf: PlayField):
 
 
 def append_bottom(te: Tetrimino, pf: PlayField):
-    
-    pass
+    pf.append_to_bottom(
+                x=te.coors['x'],
+                y=te.coors['y']
+            )
+
+
+def overlap_in_next(te: Tetrimino, pf: PlayField) -> bool:
+    t = {(c[0] + 1, c[1]) for c in te.coors}
+    n = len(t & pf.coors)
+    return n > 0
 
 
 def main():

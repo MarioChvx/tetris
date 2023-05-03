@@ -2,7 +2,8 @@ import random
 import time
 import pygame
 import numpy as np
-from Coordinates import Index as Idx, Cartesian as Cart
+from objs.Coordinates import Index as Idx, Cartesian as Cart
+
 
 class Tetrimino:
 

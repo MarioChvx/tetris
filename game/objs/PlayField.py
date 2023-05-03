@@ -1,5 +1,6 @@
 
 import numpy as np
+import itertools
 
 
 class PlayField:
@@ -17,11 +18,14 @@ class PlayField:
         self.bottom = self.calculate_bottom()
 
     def calculate_bottom(self):
-        pass
+        res = set()
+        for i, j in itertools.product(list(map(range, self.matrix.shape))):
+            if self.matrix[i][j]:
+                res.add([i, j])
+        return res
 
-    def bottom_add_squqres(self, x: list, y: list):
-        self.bottom['x'].extend(x)
-        self.bottom['y'].extend(y)
+    def bottom_add_squqres(self, squares: set):
+        self.bottom.update(squares)
 
     def remove_rows(self):
         pass

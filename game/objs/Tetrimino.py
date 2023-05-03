@@ -1,6 +1,7 @@
 import random
 import time
 import numpy as np
+import itertools
 
 
 class Tetrimino:
@@ -69,24 +70,21 @@ class Tetrimino:
         self.border = self.calculate_border()
 
     def calculate_coors(self):
-        res = {
-                'x': list(),
-                'y': list()
-                }
+        res = set()
         x, y = self.idx['x'], self.idx['y']
-        for i, row in enumerate(self.matrix):
-            for j, number in enumerate(row):
-                if number == 1:
-                    res['x'].append(x + i)
-                    res['y'].append(y + j)
+        for i, j in itertools.product(list(map(range, self.matrix.shape))):
+            if self.matrix[i][j] == 1:
+                res.add([y + i, x + j])
         return res
 
     def calculate_border(self):
+        x = [c[1] for c in self.coors]
+        y = [c[1] for c in self.coors]
         return {
-                'top':  min(self.coors['x']),
-                'left': min(self.coors['y']),
-                'bot':  max(self.coors['x']),
-                'rigth': max(self.coors['y'])
+                'top':  min(x),
+                'left': min(y),
+                'bot':  max(x),
+                'rigth': max(y)
                 }
 
     def move_left(self, units=1):

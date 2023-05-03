@@ -1,9 +1,9 @@
 
 import pygame
 import sys
-from Tetrimino import Tetrimino
+from objs.OldTetrimino import Tetrimino
 # from Coordinates import Cartesian as Cart
-from Bottom import Bottom
+from objs.Bottom import Bottom
 
 GAME_SURF = pygame.Surface(GAME_SIZE := (400, 800))
 SQUARE_SIZE = GAME_SIZE[0] // 10
