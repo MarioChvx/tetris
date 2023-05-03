@@ -1,7 +1,7 @@
 
 import numpy as np 
 import pygame
-from Coordinates import Cartesian as Cart
+from objs.Coordinates import Index as Idx, Cartesian as Cart
 
 class Bottom:
 
