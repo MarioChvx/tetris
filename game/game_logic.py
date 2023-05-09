@@ -3,6 +3,11 @@ from objs import Tetrimino
 import copy
 
 
+"""
+This is going to use PlayField and Tetrimino to control the game logic
+"""
+
+
 def print_plafield(pf: PlayField, te: Tetrimino):
     x, y = te.idx['x'], te.idx['y']
     a, b = te.matrix.shape
@@ -24,20 +29,39 @@ def tetrimino_actions(action: str, times: int, te: Tetrimino, pf: PlayField):
 
     if action == 'rotate':
         te.rotate()
-        # rotation_kick(te)
+
+    kick_in(te, pf)
+
+
+def kick_in(te: Tetrimino, pf: PlayField):
+
+    if te.border['t'] < 0:
+        te.move_down()
+
+    if te.border['b'] > pf.height or te_overlaps_pf(te, pf):
+        te.move_up()
+        append_bottom(te, pf)
+
+    if te.border['r'] > pf.width:
+        te.move_left()
+
+    if te.border['l'] < 0:
+        te.move_rigth()
 
 
 def append_bottom(te: Tetrimino, pf: PlayField):
-    pf.append_to_bottom(
-                x=te.coors['x'],
-                y=te.coors['y']
-            )
+    pf.bottom_add_squares(te.coors())
 
 
-def overlap_in_next(te: Tetrimino, pf: PlayField) -> bool:
-    t = {(c[0] + 1, c[1]) for c in te.coors}
-    n = len(t & pf.coors)
+def te_overlaps_pf(te: Tetrimino, pf: PlayField) -> bool:
+    n = len(te.corrs & pf.bottom)
     return n > 0
+
+
+def overlaps_in_next(te: Tetrimino, pf: PlayField) -> bool:
+    temp = copy.copy(te)
+    temp.move_down()
+    return te_overlaps_pf(te, pf)
 
 
 def main():

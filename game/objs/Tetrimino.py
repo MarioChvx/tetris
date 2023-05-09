@@ -12,8 +12,8 @@ class Tetrimino:
         matrix      Numpy array that has the representation of the figure.
         color       It depends on the shape_type.
         idx         The position of the top-left cornner.
-        coor        Coordinates of each square from the figure.
-        border      The max bottom and rigth coordinates.
+        coor        Coordinates of each square from the figure. (set of lists)
+        border      The max bottom, rigth, left and top from coordinates.
     """
 
     s = [[1]]
@@ -81,10 +81,10 @@ class Tetrimino:
         x = [c[1] for c in self.coors]
         y = [c[1] for c in self.coors]
         return {
-                'top':  min(x),
-                'left': min(y),
-                'bot':  max(x),
-                'rigth': max(y)
+                't':  min(x),
+                'l': min(y),
+                'b':  max(x),
+                'r': max(y)
                 }
 
     def move_left(self, units=1):

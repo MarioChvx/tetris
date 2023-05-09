@@ -10,10 +10,12 @@ class PlayField:
 
     Atributes:
         matrix
-        bottom
+        bottom  Set of coordinates
     '''
 
     def __init__(self, width=10, height=20):
+        self.width = width
+        self.height = height
         self.matrix = np.zeros((width, height)).astype(int)
         self.bottom = self.calculate_bottom()
 
