@@ -68,11 +68,22 @@ class Tetrimino:
         self.idx = {'x': 0, 'y': 0}
         self.coors = self.calculate_coors()
         self.border = self.calculate_border()
+        self.center_tetri()
+
+    def center_tetri(self):
+        pass
+
+    def reset_tetri(self):
+        pass
 
     def calculate_coors(self):
         res = set()
         x, y = self.idx['x'], self.idx['y']
-        for i, j in itertools.product(list(map(range, self.matrix.shape))):
+        a = [list(i) for i in list(itertools.product(
+            range(self.matrix.shape[0]),
+            range(self.matrix.shape[1])))]
+        print(a)
+        for i, j in a:
             if self.matrix[i][j] == 1:
                 res.add([y + i, x + j])
         return res
