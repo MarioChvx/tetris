@@ -61,18 +61,15 @@ class Tetrimino:
         self.calculate_limits()
         self.center_Tetrimino()
 
-
     def center_Tetrimino(self):
         n = len(self.matrix)
         self.move_right((10 - n) // 2)
-
 
     def calculate_limits(self):
         tops = [rect.top for rect in self.rects]
         left = [rect.left for rect in self.rects]
         self.min_cart = Cart(min(left), min(tops))
         self.max_cart = Cart( max(left) + self.square_size, max(tops) + self.square_size)
-
 
     def define_rects(self):
         rects = list()
