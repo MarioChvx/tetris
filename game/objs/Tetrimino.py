@@ -79,44 +79,45 @@ class Tetrimino:
     def calculate_coors(self):
         res = list()
         x, y = self.idx['x'], self.idx['y']
-        a = [list(i) for i in list(itertools.product(
-            range(self.matrix.shape[0]),
-            range(self.matrix.shape[1])))]
-        print(a)
-        for i, j in a:
-            if self.matrix[i][j] == 1:
-                res.append([y + i, x + j])
+        for i in range(self.matrix.shape[0]):
+            for j in range(self.matrix.shape[1]):
+                if self.matrix[i][j] == 1:
+                    res.append([y + i, x + j])
         return res
 
     def calculate_border(self):
+        y = [c[0] for c in self.coors]
         x = [c[1] for c in self.coors]
-        y = [c[1] for c in self.coors]
         return {
-                't':  min(x),
-                'l': min(y),
-                'b':  max(x),
-                'r': max(y)
+                't': min(y),
+                'l': min(x),
+                'b': max(y),
+                'r': max(x)
                 }
 
     def move_left(self, units=1):
         self.idx['x'] -= units
         for coor in self.coors:
-            coor[0] -= units
+            coor[1] -= units
+        self.border = self.calculate_border()
 
     def move_right(self, units=1):
         self.idx['x'] += units
         for coor in self.coors:
-            coor[0] += units
+            coor[1] += units
+        self.border = self.calculate_border()
 
     def move_down(self, units=1):
         self.idx['y'] += units
         for coor in self.coors:
-            coor[1] += units
+            coor[0] += units
+        self.border = self.calculate_border()
 
     def move_up(self, units=1):
         self.idx['y'] -= units
         for coor in self.coors:
-            coor[1] -= units
+            coor[0] -= units
+        self.border = self.calculate_border()
 
     def rotate(self, times=1):
         self.matrix = np.rot90(self.matrix, times)

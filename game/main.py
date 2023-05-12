@@ -23,6 +23,7 @@ def main():
 
     play_field = PlayField()
 
+    print(f'{tetrimino.idx=}\n{tetrimino.coors=}\n{tetrimino.border=}')
     while run:
         clock.tick(FPS)
 
@@ -31,7 +32,9 @@ def main():
                 run = False
                 pygame.quit()
                 sys.exit()
-            tetri_controls(event, tetrimino)
+            if event.type == pygame.KEYDOWN:
+                tetri_controls(event, tetrimino, tetrimino_rects, play_field)
+                tetrimino_rects = calculate_tetri_rects(tetrimino, SCALE)
 
         draw_window(
                 tetrimino,
@@ -58,7 +61,7 @@ def calculate_tetri_rects(te: Tetrimino, scale: int) -> list:
     for coor in te.coors:
         rects.append(
             pygame.Rect(
-                te.idx['x'] * scale, te.idx['y'] * scale,
+                coor[1] * scale, coor[0] * scale,
                 scale, scale)
             )
     return rects
@@ -69,9 +72,9 @@ def move_rects(rects: list, direction: str, scale: int, times: int = 1):
         def move(rect, scale, times): rect.x -= scale * times
     elif direction == 'r':
         def move(rect, scale, times): rect.x += scale * times
-    elif direction == 'd':
-        def move(rect, scale, times): rect.y -= scale * times
     elif direction == 'u':
+        def move(rect, scale, times): rect.y -= scale * times
+    elif direction == 'd':
         def move(rect, scale, times): rect.y += scale * times
 
     for rect in rects:
@@ -89,23 +92,26 @@ def draw_tetri(te: Tetrimino, rects: list, surf: pygame.Surface):
             )
 
 
-def tetri_controls(e: pygame.event, te: Tetrimino, te_rects: list):
+def tetri_controls(e: pygame.event, te: Tetrimino, te_rects: list, pf: PlayField):
     if e.type == pygame.KEYDOWN:
         if e.key in [pygame.K_LEFT, ord('a')]:
-            te.move_left()
-            move_rects(te_rects, 'l', SCALE)
+            gl.tetrimino_actions('l', te, pf)
+            #  move_rects(te_rects, 'l', SCALE)
 
         if e.key in [pygame.K_RIGHT, ord('d')]:
-            te.move_rigth()
-            move_rects(te_rects, 'r', SCALE)
+            gl.tetrimino_actions('r', te, pf)
+            #  move_rects(te_rects, 'r', SCALE)
 
         if e.key in [pygame.K_DOWN, ord('s')]:
-            te.move_down()
-            move_rects(te_rects, 'd', SCALE)
+            gl.tetrimino_actions('d', te, pf)
+            #  move_rects(te_rects, 'd', SCALE)
 
         if e.key in [pygame.K_UP, ord('w')]:
-            te.move_up()
-            move_rects(te_rects, 'u', SCALE)
+            gl.tetrimino_actions('u', te, pf)
+            #  move_rects(te_rects, 'u', SCALE)
+
+        print(f'{te.idx=}\n{te.coors=}\n{te.border=}')
+        gl.print_plafield(pf, te)
 
 
 if __name__ == '__main__':
