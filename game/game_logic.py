@@ -32,11 +32,8 @@ def print_plafield(pf: PlayField, te: Tetrimino):
             before = False
         elif 1 not in tetri[:, i] and not before:
             right += 1
-    print(tetri[top: a - bottom, left: b - right], top, bottom, left, right)
     tetri = tetri[top: a - bottom, left: b - right]
-    # a, b = te.border['b'] - te.border['t'], te.border['r'] - te.border['l']
     printable = copy.copy(pf.matrix)
-    # printable[y:y + a, x:x + b] += te.matrix
     printable[y + top:y + a - bottom, x + left:x + b - right] += tetri
     print(''.join([f'{row}\n' for row in printable]))
 
