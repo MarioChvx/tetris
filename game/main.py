@@ -3,7 +3,7 @@ import pygame
 import sys
 from objs.Tetrimino import Tetrimino
 from objs.PlayField import PlayField
-import game_logic
+import game_logic as gl
 
 FPS = 15
 SCALE = 40
