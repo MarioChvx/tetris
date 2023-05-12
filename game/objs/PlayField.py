@@ -20,10 +20,10 @@ class PlayField:
         self.bottom = self.calculate_bottom()
 
     def calculate_bottom(self):
-        res = set()
+        res = list()
         for i, j in itertools.product(list(map(range, self.matrix.shape))):
             if self.matrix[i][j]:
-                res.add([i, j])
+                res.append([i, j])
         return res
 
     def bottom_add_squqres(self, squares: set):

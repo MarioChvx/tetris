@@ -54,8 +54,10 @@ def append_bottom(te: Tetrimino, pf: PlayField):
 
 
 def te_overlaps_pf(te: Tetrimino, pf: PlayField) -> bool:
-    n = len(te.corrs & pf.bottom)
-    return n > 0
+    for coor in te.coors:
+        if coor in pf.coors:
+            return False
+    return True
 
 
 def overlaps_in_next(te: Tetrimino, pf: PlayField) -> bool:

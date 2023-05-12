@@ -77,7 +77,7 @@ class Tetrimino:
         pass
 
     def calculate_coors(self):
-        res = set()
+        res = list()
         x, y = self.idx['x'], self.idx['y']
         a = [list(i) for i in list(itertools.product(
             range(self.matrix.shape[0]),
@@ -85,7 +85,7 @@ class Tetrimino:
         print(a)
         for i, j in a:
             if self.matrix[i][j] == 1:
-                res.add([y + i, x + j])
+                res.append([y + i, x + j])
         return res
 
     def calculate_border(self):
