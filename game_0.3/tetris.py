@@ -69,7 +69,8 @@ GRID_WIDTH = WIDTH // BLOCK_SIZE
 GRID_HEIGHT = HEIGHT // BLOCK_SIZE
 
 # Timer for fall
-FALL_SPEED = 1 * 1000
+FALL_SPEED = (7 * 1000) // 10  
+print(FALL_SPEED)
 FALL_TIMER = pygame.USEREVENT + 1
 pygame.time.set_timer(FALL_TIMER, FALL_SPEED)
 
@@ -85,6 +86,17 @@ def draw_block(x, y, color):
 def create_block():
     return random.choice(SHAPES)
     # return SHAPES[0]
+
+def fill_blocks(blocks):
+    while len(blocks) < 4:
+        new_block = create_block()
+        if new_block not in blocks:
+            blocks.append(new_block)
+
+def create_blocks():
+    blocks = list()
+    fill_blocks(blocks)
+    return blocks
 
 def check_collision(block, x, y, grid):
     for row in range(len(block)):
@@ -102,8 +114,6 @@ def keep_in(block, x, y, grid):
             if block[row][col]:
                 max_x = max_x if max_x > col else col
                 max_y = max_y if max_y > row else row
-                min_x = min_x if min_x < col else col
-                min_y = min_y if min_y < row else row
     if min_x + x < 0:
         x = 0
     elif max_x + x > GRID_WIDTH - 1:
@@ -137,7 +147,8 @@ def draw_game_over():
 def tetris():
     clock = pygame.time.Clock()
     grid = [[0] * GRID_WIDTH for _ in range(GRID_HEIGHT)]
-    curr_block, curr_color = create_block()
+    queue_blocks = create_blocks()
+    curr_block, curr_color = queue_blocks[0]
     x, y = GRID_WIDTH // 2 - len(curr_block[0]) // 2, 0
     score = 0
 
@@ -161,6 +172,9 @@ def tetris():
                     rotated_block = list(zip(*reversed(curr_block)))
                     x = keep_in(rotated_block, x, y, grid)
                     curr_block = rotated_block
+                elif event.key in [ord('h'), ord('H')]:
+                   queue_blocks[0], queue_blocks[1] = queue_blocks[1], queue_blocks[0] 
+                   curr_block, curr_color = queue_blocks[0]
             
             if event.type == FALL_TIMER:
                 y += 1
@@ -168,12 +182,14 @@ def tetris():
         
         if check_collision(curr_block, x, y, grid):
             merge_block(curr_block, x, y, grid)
+            queue_blocks.pop(0)
+            fill_blocks(queue_blocks)
             full_rows = check_full_rows(grid)
             if full_rows:
                 for row in full_rows:
                     remove_row(grid, row)
                 score += len(full_rows)
-            curr_block, curr_color = create_block()
+            curr_block, curr_color = queue_blocks[0]
             x, y = GRID_WIDTH // 2 - len(curr_block[0]) // 2, 0
             if check_collision(curr_block, x, y, grid):
                 draw_game_over()
