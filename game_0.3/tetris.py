@@ -69,9 +69,9 @@ GRID_WIDTH = WIDTH // BLOCK_SIZE
 GRID_HEIGHT = HEIGHT // BLOCK_SIZE
 
 # Timer for fall
-FALL_TIME = 1 * 1000
+FALL_SPEED = 1 * 1000
 FALL_TIMER = pygame.USEREVENT + 1
-pygame.time.set_timer(FALL_TIMER, FALL_TIME)
+pygame.time.set_timer(FALL_TIMER, FALL_SPEED)
 
 def draw_grid():
     for x in range(0, WIDTH, BLOCK_SIZE):
@@ -164,12 +164,9 @@ def tetris():
             
             if event.type == FALL_TIMER:
                 y += 1
-                pygame.time.set_timer(FALL_TIMER, FALL_TIME)
+                pygame.time.set_timer(FALL_TIMER, FALL_SPEED - 1)
         
-        if not check_collision(curr_block, x, y, grid):
-            # y += 1
-            pass
-        else:
+        if check_collision(curr_block, x, y, grid):
             merge_block(curr_block, x, y, grid)
             full_rows = check_full_rows(grid)
             if full_rows:
@@ -181,7 +178,6 @@ def tetris():
             if check_collision(curr_block, x, y, grid):
                 draw_game_over()
                 pygame.display.update()
-                pygame.time.delay(30000)
                 return
 
         WIN.fill(BLACK)
