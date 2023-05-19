@@ -68,6 +68,11 @@ BLOCK_SIZE = 40
 GRID_WIDTH = WIDTH // BLOCK_SIZE
 GRID_HEIGHT = HEIGHT // BLOCK_SIZE
 
+# Timer for fall
+FALL_TIME = 1 * 1000
+FALL_TIMER = pygame.USEREVENT + 1
+pygame.time.set_timer(FALL_TIMER, FALL_TIME)
+
 def draw_grid():
     for x in range(0, WIDTH, BLOCK_SIZE):
         pygame.draw.line(WIN, GRAY, (x, 0), (x, HEIGHT))
@@ -78,8 +83,8 @@ def draw_block(x, y, color):
     pygame.draw.rect(WIN, color, (x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE))
 
 def create_block():
-    # return random.choice(SHAPES)
-    return SHAPES[0]
+    return random.choice(SHAPES)
+    # return SHAPES[0]
 
 def check_collision(block, x, y, grid):
     for row in range(len(block)):
@@ -110,7 +115,7 @@ def merge_block(block, x, y, grid):
     for row in range(len(block)):
         for col in range(len(block[row])):
             if block[row][col]:
-                grid[y + row][x + col] = 1
+                grid[y + row - 1][x + col] = 1
 
 def remove_row(grid, row):
     del grid[row]
@@ -143,27 +148,29 @@ def tetris():
                 return
 
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_LEFT:
+                if event.key in [pygame.K_LEFT, ord('a'), ord('A')]:
                     if not check_collision(curr_block, x - 1, y, grid):
                         x -= 1
-                elif event.key == pygame.K_RIGHT:
+                elif event.key in [pygame.K_RIGHT, ord('d'), ord('D')]:
                     if not check_collision(curr_block, x + 1, y, grid):
                         x += 1
-                elif event.key == pygame.K_DOWN:
+                elif event.key in [pygame.K_DOWN, ord('s'), ord('S')]:
                     if not check_collision(curr_block, x, y + 1, grid):
                         y += 1
-                elif event.key == pygame.K_UP:
+                elif event.key in [pygame.K_UP, ord('w'), ord('W')]:
                     rotated_block = list(zip(*reversed(curr_block)))
                     x = keep_in(rotated_block, x, y, grid)
                     curr_block = rotated_block
-                    # if not check_collision(rotated_block, x, y, grid):
-                    #     curr_block = rotated_block
-
-        if not check_collision(curr_block, x, y + 1, grid):
-            pass
+            
+            if event.type == FALL_TIMER:
+                y += 1
+                pygame.time.set_timer(FALL_TIMER, FALL_TIME)
+        
+        if not check_collision(curr_block, x, y, grid):
             # y += 1
+            pass
         else:
-            # merge_block(curr_block, x, y, grid)
+            merge_block(curr_block, x, y, grid)
             full_rows = check_full_rows(grid)
             if full_rows:
                 for row in full_rows:
@@ -174,7 +181,7 @@ def tetris():
             if check_collision(curr_block, x, y, grid):
                 draw_game_over()
                 pygame.display.update()
-                pygame.time.delay(10000)
+                pygame.time.delay(30000)
                 return
 
         WIN.fill(BLACK)
@@ -191,7 +198,7 @@ def tetris():
                     draw_block(x + col, y + row, curr_color)
 
         pygame.display.update()
-        clock.tick(20)
+        clock.tick(60)
 
 if __name__ == '__main__':
     tetris()
