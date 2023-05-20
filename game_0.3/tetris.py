@@ -70,7 +70,6 @@ GRID_HEIGHT = HEIGHT // BLOCK_SIZE
 
 # Timer for fall
 FALL_SPEED = (7 * 1000) // 10  
-print(FALL_SPEED)
 FALL_TIMER = pygame.USEREVENT + 1
 pygame.time.set_timer(FALL_TIMER, FALL_SPEED)
 
@@ -113,7 +112,7 @@ def keep_in(block, x, y, grid):
         for col in range(len(block[row])):
             if block[row][col]:
                 max_x = max_x if max_x > col else col
-                max_y = max_y if max_y > row else row
+                min_x = min_x if min_x < col else col
     if min_x + x < 0:
         x = 0
     elif max_x + x > GRID_WIDTH - 1:
@@ -144,6 +143,27 @@ def draw_game_over():
     text_rect = text.get_rect(center=(WIDTH // 2, HEIGHT // 2))
     WIN.blit(text, text_rect)
 
+def prediction(block, x, y, grid):
+    # block bottom border
+    block_bottom = list()
+    for col in range(len(block[0])):
+        block_bottom.append(-1)
+        for row in range(len(block)):
+            if row > block_bottom[col] and block[row][col]:
+                block_bottom[col] = row
+    print('bb', block_bottom)
+
+    # grid top border
+    grid_top = list()
+    for col in range(len(block[0])):
+        grid_top.append(len(grid))
+        for row in range(len(grid)):
+            if row < grid_top[col] and grid[row][col + x]:
+                grid_top[col] = row
+    print('gt', grid_top)
+
+
+
 def tetris():
     clock = pygame.time.Clock()
     grid = [[0] * GRID_WIDTH for _ in range(GRID_HEIGHT)]
@@ -159,6 +179,7 @@ def tetris():
                 return
 
             if event.type == pygame.KEYDOWN:
+                prediction(curr_block, x, y, grid)
                 if event.key in [pygame.K_LEFT, ord('a'), ord('A')]:
                     if not check_collision(curr_block, x - 1, y, grid):
                         x -= 1
@@ -173,8 +194,8 @@ def tetris():
                     x = keep_in(rotated_block, x, y, grid)
                     curr_block = rotated_block
                 elif event.key in [ord('h'), ord('H')]:
-                   queue_blocks[0], queue_blocks[1] = queue_blocks[1], queue_blocks[0] 
-                   curr_block, curr_color = queue_blocks[0]
+                    queue_blocks[0], queue_blocks[1] = queue_blocks[1], queue_blocks[0]
+                    curr_block, curr_color = queue_blocks[0]
             
             if event.type == FALL_TIMER:
                 y += 1
