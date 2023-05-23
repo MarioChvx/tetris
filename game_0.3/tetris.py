@@ -52,7 +52,7 @@ L = [[0, 0, 1],
 
 # Define block shapes
 SHAPES = [
-    (I, CYAN),
+    (I, pygame.Color.cyan2),
     (O, YELLOW),
     (S, RED),
     (Z, GREEN),
