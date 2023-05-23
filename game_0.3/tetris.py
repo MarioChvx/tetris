@@ -6,21 +6,21 @@ pygame.init()
 
 # Set up the game window
 WIDTH, HEIGHT = 400, 800
-WIN = pygame.display.set_mode((WIDTH, HEIGHT))
-GAME = pygame.surface(400, 800)
+WIN = pygame.display.set_mode((WIDTH + 200, HEIGHT))
+GAME = pygame.Surface((400, 800))
 pygame.display.set_caption("Tetris")
 
 # Define colors
-BLACK = (0, 0, 0)
-WHITE = (255, 255, 255)
-RED = (255, 0, 0)
-GREEN = (0, 255, 0)
-BLUE = (0, 0, 255)
-CYAN = (0, 255, 255)
-MAGENTA = (255, 0, 255)
-YELLOW = (255, 255, 0)
-ORANGE = (255, 165, 0)
-GRAY = (50, 50, 50)
+BLACK   = pygame.Color(0,   0,   0,   255)
+WHITE   = pygame.Color(255, 255, 255, 255)
+RED     = pygame.Color(255, 0,   0,   255)
+GREEN   = pygame.Color(0,   255, 0,   255)
+BLUE    = pygame.Color(0,   0,   255, 255)
+CYAN    = pygame.Color(0,   255, 255, 255)
+MAGENTA = pygame.Color(255, 0,   255, 255)
+YELLOW  = pygame.Color(255, 255, 0,   255)
+ORANGE  = pygame.Color(255, 165, 0,   255)
+GRAY    = pygame.Color(50,  50,  50,  255)
 
 # Define shapes
 I = [[0, 0, 0, 0],
@@ -53,13 +53,13 @@ L = [[0, 0, 1],
 
 # Define block shapes
 SHAPES = [
-    (I, pygame.Color('cyan2')),
-    (O, pygame.Color('yellow1')),
-    (S, pygame.Color('red1')),
-    (Z, pygame.Color('green1')),
-    (T, pygame.Color('magenta1')),
-    (J, pygame.Color('blue1')),
-    (L, pygame.Color('orange1')) 
+    (I, CYAN),
+    (O, YELLOW),
+    (S, RED),
+    (Z, GREEN),
+    (T, MAGENTA),
+    (J, BLUE),
+    (L, ORANGE) 
 ]
 
 # Define block size
@@ -84,6 +84,10 @@ def draw_grid():
 
 def draw_block(x, y, color):
     pygame.draw.rect(WIN, color, (x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE))
+
+
+def draw_prediction(x, y, color):
+    pygame.draw.rect(WIN, color, (x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE), BLOCK_SIZE // 12)
 
 
 def create_block():
@@ -240,7 +244,16 @@ def tetris():
                 return
 
         WIN.fill(BLACK)
-        GAME.fill((50, 50, 50))
+        GAME.fill(BLACK)
+        WIN.blit(GAME, (0, 0))
+        pygame.draw.line(WIN, WHITE, (401, 0), (401, HEIGHT))
+        pygame.draw.line(WIN, WHITE, (401, 160), (600, 160))
+        c = (200 - 40 * len(queue_blocks[1][0])) // 2
+        for row in range(len(queue_blocks[1][0])):
+            for col in range(len(queue_blocks[1][0])):
+                if queue_blocks[1][0][row][col]:
+                    pygame.draw.rect(WIN, queue_blocks[1][1], (col * BLOCK_SIZE + 400 + c, row * BLOCK_SIZE + 40, BLOCK_SIZE, BLOCK_SIZE))
+
         draw_grid()
 
         for row in range(len(grid)):
@@ -253,7 +266,7 @@ def tetris():
         for row in range(len(curr_block)):
             for col in range(len(curr_block[row])):
                 if curr_block[row][col]:
-                    draw_block(x + col, p + row, curr_color - pygame.Color(150, 150, 150, 0))
+                    draw_prediction(x + col, p + row, curr_color)
                     draw_block(x + col, y + row, curr_color)
 
         pygame.display.update()
