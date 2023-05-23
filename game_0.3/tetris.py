@@ -7,6 +7,7 @@ pygame.init()
 # Set up the game window
 WIDTH, HEIGHT = 400, 800
 WIN = pygame.display.set_mode((WIDTH, HEIGHT))
+GAME = pygame.surface(400, 800)
 pygame.display.set_caption("Tetris")
 
 # Define colors
@@ -80,12 +81,15 @@ def draw_grid():
     for y in range(0, HEIGHT, BLOCK_SIZE):
         pygame.draw.line(WIN, GRAY, (0, y), (WIDTH, y))
 
+
 def draw_block(x, y, color):
     pygame.draw.rect(WIN, color, (x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE))
+
 
 def create_block():
     return random.choice(SHAPES)
     # return SHAPES[0]
+
 
 def fill_blocks(blocks):
     while len(blocks) < 4:
@@ -236,6 +240,7 @@ def tetris():
                 return
 
         WIN.fill(BLACK)
+        GAME.fill((50, 50, 50))
         draw_grid()
 
         for row in range(len(grid)):
