@@ -145,23 +145,38 @@ def draw_game_over():
 
 def prediction(block, x, y, grid):
     # block bottom border
+    print(x)
     block_bottom = list()
     for col in range(len(block[0])):
         block_bottom.append(-1)
         for row in range(len(block)):
-            if row > block_bottom[col] and block[row][col]:
-                block_bottom[col] = row
+            if row > block_bottom[-1] and block[row][col]:
+                block_bottom[-1] = row
+    
+    after = True
+    for i in range(len(block_bottom)):
+        if block_bottom[i] == -1:
+            x = x + 1 if after else x
+        else:
+            after = False
+    block_bottom = [i for i in block_bottom if i != -1]
+
     print('bb', block_bottom)
 
     # grid top border
     grid_top = list()
-    for col in range(len(block[0])):
+    end = x + len(block_bottom) if x + len(block_bottom) < 10 else 10
+    for col in range(x, end):
         grid_top.append(len(grid))
         for row in range(len(grid)):
-            if row < grid_top[col] and grid[row][col + x]:
-                grid_top[col] = row
+            if row < grid_top[col - x] and grid[row][col]:
+                grid_top[col - x] = row
     print('gt', grid_top)
+    # print([grid_top[i] + block_bottom[i] - len(block) for i in range(len(grid_top))], '\n')
 
+    differences = [grid_top[i] - block_bottom[i] - 1 for i in range(len(grid_top))]
+    print(differences, '\n')
+    return min(differences)
 
 
 def tetris():
@@ -193,6 +208,8 @@ def tetris():
                     rotated_block = list(zip(*reversed(curr_block)))
                     x = keep_in(rotated_block, x, y, grid)
                     curr_block = rotated_block
+                elif event.key in [pygame.K_SPACE]:
+                    pass
                 elif event.key in [ord('h'), ord('H')]:
                     queue_blocks[0], queue_blocks[1] = queue_blocks[1], queue_blocks[0]
                     curr_block, curr_color = queue_blocks[0]
@@ -224,11 +241,14 @@ def tetris():
             for col in range(len(grid[row])):
                 if grid[row][col]:
                     draw_block(col, row, WHITE)
+        
+        p = prediction(curr_block, x, y, grid)
 
         for row in range(len(curr_block)):
             for col in range(len(curr_block[row])):
                 if curr_block[row][col]:
                     draw_block(x + col, y + row, curr_color)
+                    draw_block(x + col, p + row, pygame.Color('antiquewhite4'))
 
         pygame.display.update()
         clock.tick(60)
