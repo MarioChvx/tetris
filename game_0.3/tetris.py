@@ -52,13 +52,13 @@ L = [[0, 0, 1],
 
 # Define block shapes
 SHAPES = [
-    (I, pygame.Color.cyan2),
-    (O, YELLOW),
-    (S, RED),
-    (Z, GREEN),
-    (T, MAGENTA),
-    (J, BLUE),
-    (L, ORANGE) 
+    (I, pygame.Color('cyan2')),
+    (O, pygame.Color('yellow1')),
+    (S, pygame.Color('red1')),
+    (Z, pygame.Color('green1')),
+    (T, pygame.Color('magenta1')),
+    (J, pygame.Color('blue1')),
+    (L, pygame.Color('orange1')) 
 ]
 
 # Define block size
@@ -72,6 +72,7 @@ GRID_HEIGHT = HEIGHT // BLOCK_SIZE
 FALL_SPEED = (7 * 1000) // 10  
 FALL_TIMER = pygame.USEREVENT + 1
 pygame.time.set_timer(FALL_TIMER, FALL_SPEED)
+
 
 def draw_grid():
     for x in range(0, WIDTH, BLOCK_SIZE):
@@ -92,10 +93,12 @@ def fill_blocks(blocks):
         if new_block not in blocks:
             blocks.append(new_block)
 
+
 def create_blocks():
     blocks = list()
     fill_blocks(blocks)
     return blocks
+
 
 def check_collision(block, x, y, grid):
     for row in range(len(block)):
@@ -104,6 +107,7 @@ def check_collision(block, x, y, grid):
                                     y + row >= GRID_HEIGHT or grid[y + row][x + col]):
                 return True
     return False
+
 
 def keep_in(block, x, y, grid):
     max_x, min_x = 0, 0
@@ -120,15 +124,18 @@ def keep_in(block, x, y, grid):
 
     return x
 
+
 def merge_block(block, x, y, grid):
     for row in range(len(block)):
         for col in range(len(block[row])):
             if block[row][col]:
                 grid[y + row - 1][x + col] = 1
 
+
 def remove_row(grid, row):
     del grid[row]
     grid.insert(0, [0] * GRID_WIDTH)
+
 
 def check_full_rows(grid):
     full_rows = list()
@@ -137,15 +144,15 @@ def check_full_rows(grid):
             full_rows.append(i)
     return full_rows
 
+
 def draw_game_over():
     font = pygame.font.Font(None, 64)
     text = font.render("Game Over", True, RED)
     text_rect = text.get_rect(center=(WIDTH // 2, HEIGHT // 2))
     WIN.blit(text, text_rect)
 
+
 def prediction(block, x, y, grid):
-    # block bottom border
-    print(x)
     block_bottom = list()
     for col in range(len(block[0])):
         block_bottom.append(-1)
@@ -161,9 +168,6 @@ def prediction(block, x, y, grid):
             after = False
     block_bottom = [i for i in block_bottom if i != -1]
 
-    print('bb', block_bottom)
-
-    # grid top border
     grid_top = list()
     end = x + len(block_bottom) if x + len(block_bottom) < 10 else 10
     for col in range(x, end):
@@ -171,12 +175,8 @@ def prediction(block, x, y, grid):
         for row in range(len(grid)):
             if row < grid_top[col - x] and grid[row][col]:
                 grid_top[col - x] = row
-    print('gt', grid_top)
-    # print([grid_top[i] + block_bottom[i] - len(block) for i in range(len(grid_top))], '\n')
 
-    differences = [grid_top[i] - block_bottom[i] - 1 for i in range(len(grid_top))]
-    print(differences, '\n')
-    return min(differences)
+    return  min([grid_top[i] - block_bottom[i] - 1 for i in range(len(grid_top))])
 
 
 def tetris():
@@ -209,7 +209,8 @@ def tetris():
                     x = keep_in(rotated_block, x, y, grid)
                     curr_block = rotated_block
                 elif event.key in [pygame.K_SPACE]:
-                    pass
+                    p = prediction(curr_block, x, y, grid)
+                    y = p
                 elif event.key in [ord('h'), ord('H')]:
                     queue_blocks[0], queue_blocks[1] = queue_blocks[1], queue_blocks[0]
                     curr_block, curr_color = queue_blocks[0]
@@ -247,8 +248,8 @@ def tetris():
         for row in range(len(curr_block)):
             for col in range(len(curr_block[row])):
                 if curr_block[row][col]:
+                    draw_block(x + col, p + row, curr_color - pygame.Color(150, 150, 150, 0))
                     draw_block(x + col, y + row, curr_color)
-                    draw_block(x + col, p + row, pygame.Color('antiquewhite4'))
 
         pygame.display.update()
         clock.tick(60)
