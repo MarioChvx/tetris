@@ -1,98 +1,95 @@
 import pygame
 import random
+from Block import blocks, BLACK, GRAY, WHITE, RED
+from Grid import Grid
 
 # Initialize Pygame
 pygame.init()
+
+# Define block size
+BLOCK_SIZE = 40
 
 # Set up the game window
 WIDTH, HEIGHT = 400, 800
 WIN = pygame.display.set_mode((WIDTH + 200, HEIGHT))
 GAME = pygame.Surface((400, 800))
+STATS = pygame.Surface((200, 800))
 pygame.display.set_caption("Tetris")
 
-# Define colors
-BLACK   = pygame.Color(0,   0,   0,   255)
-WHITE   = pygame.Color(255, 255, 255, 255)
-RED     = pygame.Color(255, 0,   0,   255)
-GREEN   = pygame.Color(0,   255, 0,   255)
-BLUE    = pygame.Color(0,   0,   255, 255)
-CYAN    = pygame.Color(0,   255, 255, 255)
-MAGENTA = pygame.Color(255, 0,   255, 255)
-YELLOW  = pygame.Color(255, 255, 0,   255)
-ORANGE  = pygame.Color(255, 165, 0,   255)
-GRAY    = pygame.Color(50,  50,  50,  255)
-
-# Define shapes
-I = [[0, 0, 0, 0],
-     [1, 1, 1, 1],
-     [0, 0, 0, 0],
-     [0, 0, 0, 0]]
-
-O = [[1, 1],
-     [1, 1]]
-
-T = [[0, 1, 0],
-     [1, 1, 1],
-     [0, 0, 0]]
-
-S = [[0, 1, 1],
-     [1, 1, 0],
-     [0, 0, 0]]
-
-Z = [[1, 1, 0],
-     [0, 1, 1],
-     [0, 0, 0]]
-
-J = [[1, 0, 0],
-     [1, 1, 1],
-     [0, 0, 0]]
-
-L = [[0, 0, 1],
-     [1, 1, 1],
-     [0, 0, 0]]
-
-# Define block shapes
-SHAPES = [
-    (I, CYAN),
-    (O, YELLOW),
-    (S, RED),
-    (Z, GREEN),
-    (T, MAGENTA),
-    (J, BLUE),
-    (L, ORANGE) 
-]
-
-# Define block size
-BLOCK_SIZE = 40
+BLOCKS = blocks
 
 # Calculate the number of blocks that fit the screen
 GRID_WIDTH = WIDTH // BLOCK_SIZE
 GRID_HEIGHT = HEIGHT // BLOCK_SIZE
 
 # Timer for fall
-FALL_SPEED = (7 * 1000) // 10  
 FALL_TIMER = pygame.USEREVENT + 1
-pygame.time.set_timer(FALL_TIMER, FALL_SPEED)
 
+# font
+PIXEL_FONT = pygame.font.Font()
 
-def draw_grid():
+def draw_grid_lines():
     for x in range(0, WIDTH, BLOCK_SIZE):
-        pygame.draw.line(WIN, GRAY, (x, 0), (x, HEIGHT))
+        pygame.draw.line(GAME, GRAY, (x, 0), (x, HEIGHT))
     for y in range(0, HEIGHT, BLOCK_SIZE):
-        pygame.draw.line(WIN, GRAY, (0, y), (WIDTH, y))
+        pygame.draw.line(GAME, GRAY, (0, y), (WIDTH, y))
 
 
-def draw_block(x, y, color):
-    pygame.draw.rect(WIN, color, (x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE))
+def draw_square_block(x, y, color):
+    pygame.draw.rect(GAME, color, (x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE))
 
 
-def draw_prediction(x, y, color):
-    pygame.draw.rect(WIN, color, (x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE), BLOCK_SIZE // 12)
+def draw_square_grid(x, y, color):
+    pygame.draw.rect(GAME, color, (x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE))
+
+
+def draw_square_prediction(x, y, color):
+    pygame.draw.rect(
+        GAME,
+        color,
+        (x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE),
+        BLOCK_SIZE // 12
+    )
+
+def draw_block_n_prediction(block, x, y, grid):
+    p = prediction(block.shape, x, y, grid)
+    n = len(block.shape)
+    for row in range(n):
+        for col in range(n):
+            if block.shape[row][col]:
+                draw_square_prediction(x + col, p + row, block.color)
+                draw_square_block(x + col, y + row, block.color)
+
+
+def draw_grid(grid):
+    for row in range(GRID_HEIGHT):
+        for col in range(GRID_WIDTH):
+            if grid.shape[row][col]:
+                draw_square_block(col, row, grid.colors[row][col])
+
+def draw_stats_lines(surf):
+    pygame.draw.line(STATS, WHITE, (0, 0), (0, HEIGHT))
+    pygame.draw.line(STATS, WHITE, (0, 200), (200, 200))
+
+
+def draw_next_block(surf, block):
+    xp = (200 - 40 * len(block.short_shape[0])) // 2
+    yp = (200 - 40 * len(block.short_shape)) // 2
+    for row in range(len(block.short_shape)):
+        for col in range(len(block.short_shape[0])):
+            if block.short_shape[row][col]:
+                pygame.draw.rect(STATS, block.color, (col * BLOCK_SIZE + xp, row * BLOCK_SIZE + yp, BLOCK_SIZE, BLOCK_SIZE))
+
+def draw_scores(surf, score, gravity):
+    font = pygame.font.Font(None, 36)
+    punctuation = font.render(f'BLOCKS: {score}', True, WHITE)
+    surf.blit(punctuation, (10, 210))
+    punctuation = font.render(f'SPEED: {(1 / gravity) * 1000} B/s', True, WHITE)
+    surf.blit(punctuation, (10, 260))
 
 
 def create_block():
-    return random.choice(SHAPES)
-    # return SHAPES[0]
+    return random.choice(BLOCKS)
 
 
 def fill_blocks(blocks):
@@ -134,15 +131,20 @@ def keep_in(block, x, y, grid):
 
 
 def merge_block(block, x, y, grid):
-    for row in range(len(block)):
-        for col in range(len(block[row])):
-            if block[row][col]:
-                grid[y + row - 1][x + col] = 1
+    n = len(block.shape)
+    for row in range(n):
+        for col in range(n):
+            if block.shape[row][col]:
+                pass
+                grid.shape[y + row - 1][x + col] = 1
+                grid.colors[y + row - 1][x + col] = block.color
 
 
 def remove_row(grid, row):
-    del grid[row]
-    grid.insert(0, [0] * GRID_WIDTH)
+    del grid.shape[row]
+    del grid.colors[row]
+    grid.shape.insert(0, [0] * GRID_WIDTH)
+    grid.colors.insert(0, [None] * GRID_WIDTH)
 
 
 def check_full_rows(grid):
@@ -187,12 +189,47 @@ def prediction(block, x, y, grid):
     return  min([grid_top[i] - block_bottom[i] - 1 for i in range(len(grid_top))])
 
 
+def new_matrix(i, j, fill=0):
+    res = list()
+    for row in range(i):
+        res.append([fill] * j)
+    return res
+
+
+def print_grid(grid):
+    print('')
+    for row in grid:
+        print(row)
+
+
+def check_movement(event, x, y, blocks, grid):
+    if event.key in [pygame.K_LEFT, ord('a'), ord('A')] and not check_collision(blocks[0].shape, x - 1, y, grid):
+            x -= 1
+    elif event.key in [pygame.K_RIGHT, ord('d'), ord('D')] and not check_collision(blocks[0].shape, x + 1, y, grid):
+            x += 1
+    elif event.key in [pygame.K_DOWN, ord('s'), ord('S')] and not check_collision(blocks[0].shape, x, y + 1, grid):
+            y += 1
+    elif event.key in [pygame.K_UP, ord('w'), ord('W')]:
+        blocks[0].shape = list(zip(*reversed(blocks[0].shape)))
+        blocks[0].short_shape = list(zip(*reversed(blocks[0].short_shape)))
+        x = keep_in(blocks[0].shape, x, y, grid)
+    elif event.key in [pygame.K_SPACE]:
+        p = prediction(blocks[0].shape, x, y, grid)
+        y = p + 1
+    elif event.key in [ord('h'), ord('H')]:
+        blocks[0], blocks[1] = blocks[1], blocks[0]
+    
+    return x, y
+
+
 def tetris():
+    g = 1000
+    pygame.time.set_timer(FALL_TIMER, g)
     clock = pygame.time.Clock()
-    grid = [[0] * GRID_WIDTH for _ in range(GRID_HEIGHT)]
+    grid = Grid(new_matrix(GRID_HEIGHT, GRID_WIDTH), new_matrix(GRID_HEIGHT, GRID_WIDTH, None))
     queue_blocks = create_blocks()
-    curr_block, curr_color = queue_blocks[0]
-    x, y = GRID_WIDTH // 2 - len(curr_block[0]) // 2, 0
+    curr_block = queue_blocks[0]
+    x, y = GRID_WIDTH // 2 - len(curr_block.shape) // 2, 0
     score = 0
 
     while True:
@@ -202,72 +239,48 @@ def tetris():
                 return
 
             if event.type == pygame.KEYDOWN:
-                prediction(curr_block, x, y, grid)
-                if event.key in [pygame.K_LEFT, ord('a'), ord('A')]:
-                    if not check_collision(curr_block, x - 1, y, grid):
-                        x -= 1
-                elif event.key in [pygame.K_RIGHT, ord('d'), ord('D')]:
-                    if not check_collision(curr_block, x + 1, y, grid):
-                        x += 1
-                elif event.key in [pygame.K_DOWN, ord('s'), ord('S')]:
-                    if not check_collision(curr_block, x, y + 1, grid):
-                        y += 1
-                elif event.key in [pygame.K_UP, ord('w'), ord('W')]:
-                    rotated_block = list(zip(*reversed(curr_block)))
-                    x = keep_in(rotated_block, x, y, grid)
-                    curr_block = rotated_block
-                elif event.key in [pygame.K_SPACE]:
-                    p = prediction(curr_block, x, y, grid)
-                    y = p
-                elif event.key in [ord('h'), ord('H')]:
-                    queue_blocks[0], queue_blocks[1] = queue_blocks[1], queue_blocks[0]
-                    curr_block, curr_color = queue_blocks[0]
-            
+                x, y = check_movement(event, x, y, queue_blocks, grid.shape)
+                curr_block = queue_blocks[0]
+
             if event.type == FALL_TIMER:
                 y += 1
-                pygame.time.set_timer(FALL_TIMER, FALL_SPEED - 1)
+                pygame.time.set_timer(FALL_TIMER, g)
         
-        if check_collision(curr_block, x, y, grid):
+        if check_collision(curr_block.shape, x, y, grid.shape):
+            score += 1
+            if score % 10 == 0:
+                # g = int(g * 0.9)
+                g -= 100
             merge_block(curr_block, x, y, grid)
             queue_blocks.pop(0)
             fill_blocks(queue_blocks)
-            full_rows = check_full_rows(grid)
+            full_rows = check_full_rows(grid.shape)
             if full_rows:
                 for row in full_rows:
                     remove_row(grid, row)
                 score += len(full_rows)
-            curr_block, curr_color = queue_blocks[0]
-            x, y = GRID_WIDTH // 2 - len(curr_block[0]) // 2, 0
-            if check_collision(curr_block, x, y, grid):
+            curr_block = queue_blocks[0]
+            x, y = GRID_WIDTH // 2 - len(curr_block.shape) // 2, 0
+            if check_collision(curr_block.shape, x, y, grid.shape):
                 draw_game_over()
                 pygame.display.update()
                 return
 
+
+        # Draw game 
         WIN.fill(BLACK)
+
+        STATS.fill(BLACK)
+        draw_stats_lines(STATS)
+        draw_next_block(STATS, queue_blocks[1])
+        draw_scores(STATS, score, g)
+        WIN.blit(STATS, (400, 0))
+
         GAME.fill(BLACK)
+        draw_grid_lines()
+        draw_grid(grid)
+        draw_block_n_prediction(curr_block, x, y, grid.shape)
         WIN.blit(GAME, (0, 0))
-        pygame.draw.line(WIN, WHITE, (401, 0), (401, HEIGHT))
-        pygame.draw.line(WIN, WHITE, (401, 160), (600, 160))
-        c = (200 - 40 * len(queue_blocks[1][0])) // 2
-        for row in range(len(queue_blocks[1][0])):
-            for col in range(len(queue_blocks[1][0])):
-                if queue_blocks[1][0][row][col]:
-                    pygame.draw.rect(WIN, queue_blocks[1][1], (col * BLOCK_SIZE + 400 + c, row * BLOCK_SIZE + 40, BLOCK_SIZE, BLOCK_SIZE))
-
-        draw_grid()
-
-        for row in range(len(grid)):
-            for col in range(len(grid[row])):
-                if grid[row][col]:
-                    draw_block(col, row, WHITE)
-        
-        p = prediction(curr_block, x, y, grid)
-
-        for row in range(len(curr_block)):
-            for col in range(len(curr_block[row])):
-                if curr_block[row][col]:
-                    draw_prediction(x + col, p + row, curr_color)
-                    draw_block(x + col, y + row, curr_color)
 
         pygame.display.update()
         clock.tick(60)
