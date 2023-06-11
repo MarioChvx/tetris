@@ -28,6 +28,7 @@ FALL_TIMER = pygame.USEREVENT + 1
 # font
 PIXEL_FONT = pygame.font.Font()
 
+
 def draw_grid_lines():
     for x in range(0, WIDTH, BLOCK_SIZE):
         pygame.draw.line(GAME, GRAY, (x, 0), (x, HEIGHT))
@@ -51,6 +52,7 @@ def draw_square_prediction(x, y, color):
         BLOCK_SIZE // 12
     )
 
+
 def draw_block_n_prediction(block, x, y, grid):
     p = prediction(block.shape, x, y, grid)
     n = len(block.shape)
@@ -67,6 +69,7 @@ def draw_grid(grid):
             if grid.shape[row][col]:
                 draw_square_block(col, row, grid.colors[row][col])
 
+
 def draw_stats_lines(surf):
     pygame.draw.line(STATS, WHITE, (0, 0), (0, HEIGHT))
     pygame.draw.line(STATS, WHITE, (0, 200), (200, 200))
@@ -80,12 +83,19 @@ def draw_next_block(surf, block):
             if block.short_shape[row][col]:
                 pygame.draw.rect(STATS, block.color, (col * BLOCK_SIZE + xp, row * BLOCK_SIZE + yp, BLOCK_SIZE, BLOCK_SIZE))
 
-def draw_scores(surf, score, gravity):
+
+def draw_scores(surf, score, gravity, temp):
     font = pygame.font.Font(None, 36)
     punctuation = font.render(f'BLOCKS: {score}', True, WHITE)
     surf.blit(punctuation, (10, 210))
     punctuation = font.render(f'SPEED: {(1 / gravity) * 1000} B/s', True, WHITE)
     surf.blit(punctuation, (10, 260))
+    punctuation = font.render(f'{temp[0]}', True, WHITE)
+    surf.blit(punctuation, (10, 310))
+    punctuation = font.render(f'{temp[1]}', True, WHITE)
+    surf.blit(punctuation, (10, 360))
+    punctuation = font.render(f'{temp[2]}', True, WHITE)
+    surf.blit(punctuation, (10, 410))
 
 
 def create_block():
@@ -116,7 +126,6 @@ def check_collision(block, x, y, grid):
 
 def keep_in(block, x, y, grid):
     max_x, min_x = 0, 0
-    max_y, min_y = 0, 0
     for row in range(len(block)):
         for col in range(len(block[row])):
             if block[row][col]:
@@ -128,6 +137,24 @@ def keep_in(block, x, y, grid):
         x = GRID_WIDTH - len(block[0])
 
     return x
+
+
+def calculate_scores(grid, width, height):
+    max_height = 0
+    fillness = 0
+    holes = 0
+    for i in range(len(grid)):
+        # max_height = len(grid) - i if 1 in grid[i] and not max_height else 0
+        if 1 in grid[i]:
+            max_height += 1
+        for j in range(len(grid[0])):
+            if grid[i][j]:
+                fillness += 1
+            if grid[i][j] == 0 and grid[i - 1][j] == 1:
+                holes += 1
+    return (max_height,
+            fillness / (max_height * len(grid[0])) if max_height > 0 else 0,
+            holes)
 
 
 def merge_block(block, x, y, grid):
@@ -169,7 +196,7 @@ def prediction(block, x, y, grid):
         for row in range(len(block)):
             if row > block_bottom[-1] and block[row][col]:
                 block_bottom[-1] = row
-    
+
     after = True
     for i in range(len(block_bottom)):
         if block_bottom[i] == -1:
@@ -186,7 +213,7 @@ def prediction(block, x, y, grid):
             if row < grid_top[col - x] and grid[row][col]:
                 grid_top[col - x] = row
 
-    return  min([grid_top[i] - block_bottom[i] - 1 for i in range(len(grid_top))])
+    return min([grid_top[i] - block_bottom[i] - 1 for i in range(len(grid_top))])
 
 
 def new_matrix(i, j, fill=0):
@@ -204,11 +231,11 @@ def print_grid(grid):
 
 def check_movement(event, x, y, blocks, grid):
     if event.key in [pygame.K_LEFT, ord('a'), ord('A')] and not check_collision(blocks[0].shape, x - 1, y, grid):
-            x -= 1
+        x -= 1
     elif event.key in [pygame.K_RIGHT, ord('d'), ord('D')] and not check_collision(blocks[0].shape, x + 1, y, grid):
-            x += 1
+        x += 1
     elif event.key in [pygame.K_DOWN, ord('s'), ord('S')] and not check_collision(blocks[0].shape, x, y + 1, grid):
-            y += 1
+        y += 1
     elif event.key in [pygame.K_UP, ord('w'), ord('W')]:
         blocks[0].shape = list(zip(*reversed(blocks[0].shape)))
         blocks[0].short_shape = list(zip(*reversed(blocks[0].short_shape)))
@@ -218,7 +245,7 @@ def check_movement(event, x, y, blocks, grid):
         y = p + 1
     elif event.key in [ord('h'), ord('H')]:
         blocks[0], blocks[1] = blocks[1], blocks[0]
-    
+
     return x, y
 
 
@@ -245,7 +272,7 @@ def tetris():
             if event.type == FALL_TIMER:
                 y += 1
                 pygame.time.set_timer(FALL_TIMER, g)
-        
+
         if check_collision(curr_block.shape, x, y, grid.shape):
             score += 1
             if score % 10 == 0:
@@ -266,14 +293,13 @@ def tetris():
                 pygame.display.update()
                 return
 
-
-        # Draw game 
+        # Draw game
         WIN.fill(BLACK)
 
         STATS.fill(BLACK)
         draw_stats_lines(STATS)
         draw_next_block(STATS, queue_blocks[1])
-        draw_scores(STATS, score, g)
+        draw_scores(STATS, score, g, calculate_scores(grid.shape, WIDTH, HEIGHT))
         WIN.blit(STATS, (400, 0))
 
         GAME.fill(BLACK)
@@ -284,6 +310,7 @@ def tetris():
 
         pygame.display.update()
         clock.tick(60)
+
 
 if __name__ == '__main__':
     tetris()
