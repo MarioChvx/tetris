@@ -139,22 +139,37 @@ def keep_in(block, x, y, grid):
     return x
 
 
+def rotate_matrix(matrix):
+    return list(zip(*reversed(matrix)))
+
+
+def calculate_holes(grid):
+    grid = rotate_matrix(grid)
+    holes = 0
+    for col in grid:
+        col = list(reversed(col))
+        after = -1
+        for n in range(len(col)):
+            if col[n] == 1 and after == -1:
+                after = n
+            elif col[n] == 0 and after != -1:
+                holes += 1
+    return holes
+
+
 def calculate_scores(grid, width, height):
     max_height = 0
     fillness = 0
-    holes = 0
-    for i in range(len(grid)):
+    for i, row in enumerate(grid):
         # max_height = len(grid) - i if 1 in grid[i] and not max_height else 0
         if 1 in grid[i]:
             max_height += 1
         for j in range(len(grid[0])):
             if grid[i][j]:
                 fillness += 1
-            if grid[i][j] == 0 and grid[i - 1][j] == 1:
-                holes += 1
     return (max_height,
             fillness / (max_height * len(grid[0])) if max_height > 0 else 0,
-            holes)
+            calculate_holes(grid))
 
 
 def merge_block(block, x, y, grid):
