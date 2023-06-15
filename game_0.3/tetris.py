@@ -98,6 +98,19 @@ def draw_scores(surf, score, gravity, temp):
     surf.blit(punctuation, (10, 410))
 
 
+def draw_mode(surf, mode):
+    font = pygame.font.Font(None, 36)
+    punctuation = font.render(f'mode: {mode}', True, WHITE)
+    surf.blit(punctuation, (10, 740))
+
+
+def draw_game_over():
+    font = pygame.font.Font(None, 64)
+    text = font.render("Game Over", True, RED)
+    text_rect = text.get_rect(center=(WIDTH // 2, HEIGHT // 2))
+    WIN.blit(text, text_rect)
+
+
 def create_block():
     return random.choice(BLOCKS)
 
@@ -169,7 +182,8 @@ def calculate_scores(grid, width, height):
                 fillness += 1
     return (max_height,
             fillness / (max_height * len(grid[0])) if max_height > 0 else 0,
-            calculate_holes(grid))
+            calculate_holes(grid),
+            sum(check_full_rows(grid)))
 
 
 def merge_block(block, x, y, grid):
@@ -195,13 +209,6 @@ def check_full_rows(grid):
         if all(grid[i]):
             full_rows.append(i)
     return full_rows
-
-
-def draw_game_over():
-    font = pygame.font.Font(None, 64)
-    text = font.render("Game Over", True, RED)
-    text_rect = text.get_rect(center=(WIDTH // 2, HEIGHT // 2))
-    WIN.blit(text, text_rect)
 
 
 def prediction(block, x, y, grid):
@@ -264,15 +271,36 @@ def check_movement(event, x, y, blocks, grid):
     return x, y
 
 
-def tetris():
+def check_mode(event, mode):
+    if event.key == pygame.K_F1 and mode != 1:
+        tetris(1)
+    elif event.key == pygame.K_F2 and mode != 2:
+        tetris(2)
+    elif event.key == pygame.K_F3 and mode != 3:
+        tetris(3)
+    else:
+        pass
+
+
+def tetris(mode):
     g = 1000
     pygame.time.set_timer(FALL_TIMER, g)
     clock = pygame.time.Clock()
-    grid = Grid(new_matrix(GRID_HEIGHT, GRID_WIDTH), new_matrix(GRID_HEIGHT, GRID_WIDTH, None))
+
+    if mode == 1:
+        grid = Grid(new_matrix(GRID_HEIGHT, GRID_WIDTH), new_matrix(GRID_HEIGHT, GRID_WIDTH, None))
+        x, y = GRID_WIDTH // 2 - len(curr_block.shape) // 2, 0
+        score = 0
+    elif mode == 2:
+        grids = [Grid(new_matrix(GRID_HEIGHT, GRID_WIDTH), new_matrix(GRID_HEIGHT, GRID_WIDTH, None))] * 100
+        grid = grids[0]
+        X_arr, Y_arr = [GRID_WIDTH // 2 - len(curr_block.shape) // 2] * 100, [] * 100
+        x, y = X_arr[0], Y_arr[0]
+        scores = [0] * 100
+        score = scores[0]
+
     queue_blocks = create_blocks()
     curr_block = queue_blocks[0]
-    x, y = GRID_WIDTH // 2 - len(curr_block.shape) // 2, 0
-    score = 0
 
     while True:
         for event in pygame.event.get():
@@ -281,6 +309,7 @@ def tetris():
                 return
 
             if event.type == pygame.KEYDOWN:
+                check_mode(event, mode)
                 x, y = check_movement(event, x, y, queue_blocks, grid.shape)
                 curr_block = queue_blocks[0]
 
@@ -315,6 +344,7 @@ def tetris():
         draw_stats_lines(STATS)
         draw_next_block(STATS, queue_blocks[1])
         draw_scores(STATS, score, g, calculate_scores(grid.shape, WIDTH, HEIGHT))
+        draw_mode(STATS, mode)
         WIN.blit(STATS, (400, 0))
 
         GAME.fill(BLACK)
@@ -328,4 +358,4 @@ def tetris():
 
 
 if __name__ == '__main__':
-    tetris()
+    tetris(1)
