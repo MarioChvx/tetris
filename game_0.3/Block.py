@@ -69,13 +69,14 @@ class Block:
     shape: tuple
     short_shape: tuple
     color: Color
+    turns: int
 
 blocks = (
-    Block(I, i, CYAN),
-    Block(O, O, YELLOW),
-    Block(S, s, RED),
-    Block(Z, z, GREEN),
-    Block(T, t, MAGENTA),
-    Block(J, j, BLUE),
-    Block(L, l, ORANGE) 
+    Block(I, i, CYAN, 2),
+    Block(O, O, YELLOW, 1),
+    Block(S, s, RED, 2),
+    Block(Z, z, GREEN, 2),
+    Block(T, t, MAGENTA, 4),
+    Block(J, j, BLUE, 4),
+    Block(L, l, ORANGE, 4) 
 )

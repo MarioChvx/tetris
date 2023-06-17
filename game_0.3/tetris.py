@@ -90,12 +90,14 @@ def draw_scores(surf, score, gravity, temp):
     surf.blit(punctuation, (10, 210))
     punctuation = font.render(f'SPEED: {(1 / gravity) * 1000} B/s', True, WHITE)
     surf.blit(punctuation, (10, 260))
-    punctuation = font.render(f'{temp[0]}', True, WHITE)
+    punctuation = font.render(f'height: {temp[0]}', True, WHITE)
     surf.blit(punctuation, (10, 310))
-    punctuation = font.render(f'{temp[1]}', True, WHITE)
+    punctuation = font.render(f'fillnes: {temp[1]}', True, WHITE)
     surf.blit(punctuation, (10, 360))
-    punctuation = font.render(f'{temp[2]}', True, WHITE)
+    punctuation = font.render(f'holes: {temp[2]}', True, WHITE)
     surf.blit(punctuation, (10, 410))
+    punctuation = font.render(f'full rows: {temp[3]}', True, WHITE)
+    surf.blit(punctuation, (10, 460))
 
 
 def draw_mode(surf, mode):
@@ -109,6 +111,12 @@ def draw_game_over():
     text = font.render("Game Over", True, RED)
     text_rect = text.get_rect(center=(WIDTH // 2, HEIGHT // 2))
     WIN.blit(text, text_rect)
+
+
+def draw_curr_game(surf, game_index):
+    font = pygame.font.Font(None, 36)
+    punctuation = font.render(f'game: {game_index}', True, WHITE)
+    surf.blit(punctuation, (10, 700))
 
 
 def create_block():
@@ -183,7 +191,7 @@ def calculate_scores(grid, width, height):
     return (max_height,
             fillness / (max_height * len(grid[0])) if max_height > 0 else 0,
             calculate_holes(grid),
-            sum(check_full_rows(grid)))
+            len(check_full_rows(grid)))
 
 
 def merge_block(block, x, y, grid):
@@ -271,6 +279,14 @@ def check_movement(event, x, y, blocks, grid):
     return x, y
 
 
+def check_movement2(event, game_index):
+    if event.key in [pygame.K_LEFT, ord('a'), ord('A')]:
+        game_index = 100 if game_index == 0 else game_index - 1
+    elif event.key in [pygame.K_RIGHT, ord('d'), ord('D')]:
+        game_index = 0 if game_index == 100 else game_index + 1
+    return game_index
+
+
 def check_mode(event, mode):
     if event.key == pygame.K_F1 and mode != 1:
         tetris(1)
@@ -282,10 +298,22 @@ def check_mode(event, mode):
         pass
 
 
+def gen_all_posibilities(block, grid):
+    width = len(grid[0])
+    block_m = block.short_shape
+    for t in range(block.turns):
+        for x in range(width):
+            y = prediction(block.shape, x, 0, grid.shape)
+            merge_block()
+        block_m = rotate_matrix(block_m)
+    
+
 def tetris(mode):
     g = 1000
     pygame.time.set_timer(FALL_TIMER, g)
     clock = pygame.time.Clock()
+    queue_blocks = create_blocks()
+    curr_block = queue_blocks[0]
 
     if mode == 1:
         grid = Grid(new_matrix(GRID_HEIGHT, GRID_WIDTH), new_matrix(GRID_HEIGHT, GRID_WIDTH, None))
@@ -294,13 +322,11 @@ def tetris(mode):
     elif mode == 2:
         grids = [Grid(new_matrix(GRID_HEIGHT, GRID_WIDTH), new_matrix(GRID_HEIGHT, GRID_WIDTH, None))] * 100
         grid = grids[0]
-        X_arr, Y_arr = [GRID_WIDTH // 2 - len(curr_block.shape) // 2] * 100, [] * 100
+        X_arr, Y_arr = [0] * 100, [0] * 100
         x, y = X_arr[0], Y_arr[0]
         scores = [0] * 100
         score = scores[0]
-
-    queue_blocks = create_blocks()
-    curr_block = queue_blocks[0]
+        curr_game = 0
 
     while True:
         for event in pygame.event.get():
@@ -310,32 +336,47 @@ def tetris(mode):
 
             if event.type == pygame.KEYDOWN:
                 check_mode(event, mode)
-                x, y = check_movement(event, x, y, queue_blocks, grid.shape)
+                if mode == 1:
+                    x, y = check_movement(event, x, y, queue_blocks, grid.shape)
+                elif mode == 2:
+                    curr_game = check_movement2(event, curr_game)
+                    grid = grids[curr_game]
+                    x, y = X_arr[curr_game], Y_arr[curr_game]
+                    score = scores[curr_game]
                 curr_block = queue_blocks[0]
 
             if event.type == FALL_TIMER:
-                y += 1
-                pygame.time.set_timer(FALL_TIMER, g)
+                if mode == 1:
+                    y += 1
+                    pygame.time.set_timer(FALL_TIMER, g)
+                elif mode == 2:
+                    Y_arr = [y + 1 for y in Y_arr]
+                    pygame.time.set_timer(FALL_TIMER, g)
 
-        if check_collision(curr_block.shape, x, y, grid.shape):
-            score += 1
-            if score % 10 == 0:
-                # g = int(g * 0.9)
-                g -= 100
-            merge_block(curr_block, x, y, grid)
-            queue_blocks.pop(0)
-            fill_blocks(queue_blocks)
-            full_rows = check_full_rows(grid.shape)
-            if full_rows:
-                for row in full_rows:
-                    remove_row(grid, row)
-                score += len(full_rows)
-            curr_block = queue_blocks[0]
-            x, y = GRID_WIDTH // 2 - len(curr_block.shape) // 2, 0
+        if mode == 1: 
             if check_collision(curr_block.shape, x, y, grid.shape):
-                draw_game_over()
-                pygame.display.update()
-                return
+                score += 1
+                if score % 10 == 0:
+                    # g = int(g * 0.9)
+                    g -= 100
+                merge_block(curr_block, x, y, grid)
+                queue_blocks.pop(0)
+                fill_blocks(queue_blocks)
+                full_rows = check_full_rows(grid.shape)
+                if full_rows:
+                    for row in full_rows:
+                        remove_row(grid, row)
+                    score += len(full_rows)
+                curr_block = queue_blocks[0]
+                x, y = GRID_WIDTH // 2 - len(curr_block.shape) // 2, 0
+                if check_collision(curr_block.shape, x, y, grid.shape):
+                    draw_game_over()
+                    pygame.display.update()
+                    return
+        elif mode == 2:
+            for i, grid in enumerate(grids):
+                pass
+
 
         # Draw game
         WIN.fill(BLACK)
@@ -345,6 +386,8 @@ def tetris(mode):
         draw_next_block(STATS, queue_blocks[1])
         draw_scores(STATS, score, g, calculate_scores(grid.shape, WIDTH, HEIGHT))
         draw_mode(STATS, mode)
+        if mode == 2:
+            draw_curr_game(STATS, curr_game)
         WIN.blit(STATS, (400, 0))
 
         GAME.fill(BLACK)
