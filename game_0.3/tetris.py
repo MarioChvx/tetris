@@ -1,5 +1,6 @@
 import pygame
 import random
+from copy import copy
 from Block import blocks, BLACK, GRAY, WHITE, RED
 from Grid import Grid
 
@@ -199,7 +200,6 @@ def merge_block(block, x, y, grid):
     for row in range(n):
         for col in range(n):
             if block.shape[row][col]:
-                pass
                 grid.shape[y + row - 1][x + col] = 1
                 grid.colors[y + row - 1][x + col] = block.color
 
@@ -298,15 +298,32 @@ def check_mode(event, mode):
         pass
 
 
-def gen_all_posibilities(block, grid):
-    width = len(grid[0])
+def shape_merge(block, x, y, grid) -> list:
+    result = grid.copy()
+    block_width = len(block[0])
+    block_height = len(block)
+    for row in range(block_height):
+        for col in range(block_width):
+            if block[row][col]:
+                grid[y + row][x + col] += 1
+    return grid
+
+
+
+def gen_all_posibilites(block, grid) -> list:
+    grid_width = len(grid[0])
     block_m = block.short_shape
+    posibilites = list()
     for t in range(block.turns):
-        for x in range(width):
-            y = prediction(block.shape, x, 0, grid.shape)
-            merge_block()
+        shape_width = len(bloc[0])
+        for x in range(grid_width - shape_width):
+            posibilites.append({
+                'turns': t,
+                'moves': x,
+                'shape': shape_merge(block, x, 0, grid)
+            })
         block_m = rotate_matrix(block_m)
-    
+    return posibilites
 
 def tetris(mode):
     g = 1000
@@ -374,7 +391,10 @@ def tetris(mode):
                     pygame.display.update()
                     return
         elif mode == 2:
+            posibilites = list()
             for i, grid in enumerate(grids):
+                posibilites.append(gen_all_posibilites(blocks[0].shape, grids[i]))
+                posibilites.append(gen_all_posibilites(blocks[1].shape, grids[i]))
                 pass
 
 
