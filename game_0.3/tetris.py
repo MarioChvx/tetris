@@ -1,6 +1,6 @@
 import pygame
 import random
-from copy import copy
+from copy import copy, deepcopy
 from Block import blocks, BLACK, GRAY, WHITE, RED
 from Grid import Grid
 
@@ -60,6 +60,15 @@ def draw_block_n_prediction(block, x, y, grid):
     for row in range(n):
         for col in range(n):
             if block.shape[row][col]:
+                draw_square_prediction(x + col, p + row, block.color)
+                draw_square_block(x + col, y + row, block.color)
+                
+
+def draw_block_n_prediction2(block, x, y, grid):
+    p = hard_drop(block.short_shape, x, grid)
+    for row in range(len(block.short_shape)):
+        for col in range(len(block.short_shape[0])):
+            if block.short_shape[row][col]:
                 draw_square_prediction(x + col, p + row, block.color)
                 draw_square_block(x + col, y + row, block.color)
 
@@ -179,7 +188,7 @@ def calculate_holes(grid):
     return holes
 
 
-def calculate_scores(grid, width, height):
+def calculate_scores(grid):
     max_height = 0
     fillness = 0
     for i, row in enumerate(grid):
@@ -227,6 +236,7 @@ def prediction(block, x, y, grid):
             if row > block_bottom[-1] and block[row][col]:
                 block_bottom[-1] = row
 
+    # checar si hay columna de 0 a la izquierda
     after = True
     for i in range(len(block_bottom)):
         if block_bottom[i] == -1:
@@ -246,6 +256,26 @@ def prediction(block, x, y, grid):
     return min([grid_top[i] - block_bottom[i] - 1 for i in range(len(grid_top))])
 
 
+def hard_drop(block, x, grid):
+    # el mas alto de cada columna
+    block_bottom = list()
+    for col in range(len(block[0])):
+        block_bottom.append(-1)
+        for row in range(len(block)):
+            if row > block_bottom[-1] and block[row][col]:
+                block_bottom[-1] = row
+
+    grid_top = list()
+    end = x + len(block_bottom) if x + len(block_bottom) < 10 else 10
+    for col in range(x, end):
+        grid_top.append(len(grid))
+        for row in range(len(grid)):
+            if row < grid_top[col - x] and grid[row][col]:
+                grid_top[col - x] = row
+
+    return min([grid_top[i] - block_bottom[i] - 1 for i in range(len(grid_top))])
+
+
 def new_matrix(i, j, fill=0):
     res = list()
     for row in range(i):
@@ -253,9 +283,10 @@ def new_matrix(i, j, fill=0):
     return res
 
 
-def print_grid(grid):
+def print_grid(grid, limit = 20):
     print('')
-    for row in grid:
+    n = len(grid)
+    for row in grid[n - limit: n]:
         print(row)
 
 
@@ -298,6 +329,21 @@ def check_mode(event, mode):
         pass
 
 
+def merge_block2(block, x, y, grid):
+    block_width = len(block.short_shape[0])
+    block_height = len(block.short_shape)
+    for row in range(block_height):
+        for col in range(block_width):
+            if block.short_shape[row][col]:
+                grid.shape[y + row][x + col] = 1
+                grid.colors[y + row][x + col] = block.color
+    # print(y)
+    # print(x)
+    # print_grid(block.short_shape)
+    # print_grid(grid.shape)
+    # fail()
+
+
 def shape_merge(block, x, y, grid) -> list:
     result = grid.copy()
     block_width = len(block[0])
@@ -306,43 +352,71 @@ def shape_merge(block, x, y, grid) -> list:
         for col in range(block_width):
             if block[row][col]:
                 grid[y + row][x + col] += 1
-    return grid
+    return result
 
 
-
-def gen_all_posibilites(block, grid) -> list:
+def gen_all_posibilites(a, block, grid) -> list:
     grid_width = len(grid[0])
     block_m = block.short_shape
     posibilites = list()
     for t in range(block.turns):
-        shape_width = len(bloc[0])
-        for x in range(grid_width - shape_width):
+        shape_width = len(block_m[0])
+        for x in range(grid_width - shape_width + 1):
+            y = hard_drop(block_m, x, grid)
+            n_grid = deepcopy(grid)
             posibilites.append({
+                'a': a,
                 'turns': t,
                 'moves': x,
-                'shape': shape_merge(block, x, 0, grid)
+                'y': y,
+                'shape': shape_merge(block_m, x, y, n_grid)
             })
+            # print_grid(posibilites[-1]['shape'])
+            # fail()
+            n_grid = None
         block_m = rotate_matrix(block_m)
     return posibilites
+
+
+def score_possibility(possibility: dict):
+    t = possibility.copy()
+    t['scores'] = calculate_scores(t['shape'])
+    t.pop('shape')
+    return t
+
+
+def eval_possibility(possibility: dict, weights: list):
+    t = possibility.copy()
+    t['eval'] = sum([t['scores'][i] + weights[i] for i in range(4)])
+    t.pop('scores')
+    return t
+
+
+def gen_vector():
+    return (random.uniform(-10, 0),
+            random.uniform(0, 10),
+            random.uniform(-10, 0),
+            random.uniform(0, 10))
+
 
 def tetris(mode):
     g = 1000
     pygame.time.set_timer(FALL_TIMER, g)
     clock = pygame.time.Clock()
-    queue_blocks = create_blocks()
-    curr_block = queue_blocks[0]
+    score = 0
 
     if mode == 1:
+        queue_blocks = create_blocks()
+        curr_block = queue_blocks[0]
         grid = Grid(new_matrix(GRID_HEIGHT, GRID_WIDTH), new_matrix(GRID_HEIGHT, GRID_WIDTH, None))
         x, y = GRID_WIDTH // 2 - len(curr_block.shape) // 2, 0
-        score = 0
     elif mode == 2:
-        grids = [Grid(new_matrix(GRID_HEIGHT, GRID_WIDTH), new_matrix(GRID_HEIGHT, GRID_WIDTH, None))] * 100
-        grid = grids[0]
+        gen = 0
+        queues_blocks = [create_blocks() for _ in range(100)]
+        curr_blocks = [queues_blocks[i][0] for i in range(100)]
+        vectors = [gen_vector() for _ in range(100)]
+        grids = [Grid(new_matrix(GRID_HEIGHT, GRID_WIDTH), new_matrix(GRID_HEIGHT, GRID_WIDTH, None)) for _ in range(100)]
         X_arr, Y_arr = [0] * 100, [0] * 100
-        x, y = X_arr[0], Y_arr[0]
-        scores = [0] * 100
-        score = scores[0]
         curr_game = 0
 
     while True:
@@ -355,12 +429,11 @@ def tetris(mode):
                 check_mode(event, mode)
                 if mode == 1:
                     x, y = check_movement(event, x, y, queue_blocks, grid.shape)
+                    curr_block = queue_blocks[0]
                 elif mode == 2:
                     curr_game = check_movement2(event, curr_game)
                     grid = grids[curr_game]
                     x, y = X_arr[curr_game], Y_arr[curr_game]
-                    score = scores[curr_game]
-                curr_block = queue_blocks[0]
 
             if event.type == FALL_TIMER:
                 if mode == 1:
@@ -383,7 +456,7 @@ def tetris(mode):
                 if full_rows:
                     for row in full_rows:
                         remove_row(grid, row)
-                    score += len(full_rows)
+                score += len(full_rows)
                 curr_block = queue_blocks[0]
                 x, y = GRID_WIDTH // 2 - len(curr_block.shape) // 2, 0
                 if check_collision(curr_block.shape, x, y, grid.shape):
@@ -391,11 +464,42 @@ def tetris(mode):
                     pygame.display.update()
                     return
         elif mode == 2:
-            posibilites = list()
             for i, grid in enumerate(grids):
-                posibilites.append(gen_all_posibilites(blocks[0].shape, grids[i]))
-                posibilites.append(gen_all_posibilites(blocks[1].shape, grids[i]))
-                pass
+                if score < 1:
+                    posibilites = list()
+                    posibilites.extend(gen_all_posibilites(0, queues_blocks[i][0], grids[i].shape))
+                    posibilites.extend(gen_all_posibilites(1, queues_blocks[i][1], grids[i].shape))
+                    posibilites = list(map(score_possibility, posibilites))
+                    posibilites = [eval_possibility(posibilites[j], vectors[i]) for j in range(len(posibilites))] 
+                    best_move = max(posibilites, key=lambda p: p['eval'])
+                    print(i)
+                    print(best_move)
+                    print_grid(queues_blocks[i][best_move['a']].short_shape)
+                    X_arr[i] = best_move['moves']
+                    for _ in range(best_move['turns']):
+                        queues_blocks[i][best_move['a']].short_shape = rotate_matrix(queues_blocks[i][best_move['a']].short_shape)
+                        
+                    
+                    merge_block2(queues_blocks[i][best_move['a']], X_arr[i], best_move['y'], grids[i])
+                    queues_blocks[i].pop(best_move['a'])
+                    fill_blocks(queues_blocks[i])
+                    full_rows = check_full_rows(grids[i].shape)
+                    if full_rows:
+                        for row in full_rows:
+                            remove_row(grids[i], row)
+                    score += len(full_rows)
+                    curr_blocks[i] = queues_blocks[i][0]
+                    X_arr[i], Y_arr[i] = 0, 0
+                    if check_collision(curr_blocks[i].shape, X_arr[i], Y_arr[i], grids[i].shape):
+                        grids.pop(i)
+                        queues_blocks.pop(i)
+                        curr_blocks.pop(i)
+                        X_arr.pop(i)
+                        Y_arr.pop(i)
+                        vectors.pop(i)
+                        pass
+            fail()
+            score += 1
 
 
         # Draw game
@@ -403,17 +507,28 @@ def tetris(mode):
 
         STATS.fill(BLACK)
         draw_stats_lines(STATS)
-        draw_next_block(STATS, queue_blocks[1])
-        draw_scores(STATS, score, g, calculate_scores(grid.shape, WIDTH, HEIGHT))
         draw_mode(STATS, mode)
-        if mode == 2:
+        if mode == 1:
+            draw_next_block(STATS, queue_blocks[1])
+            draw_scores(STATS, score, g, calculate_scores(grid.shape))
+        elif mode == 2:
+            draw_next_block(STATS, queues_blocks[curr_game][1])
+            draw_scores(STATS, score, g, calculate_scores(grids[curr_game].shape))
             draw_curr_game(STATS, curr_game)
         WIN.blit(STATS, (400, 0))
 
         GAME.fill(BLACK)
         draw_grid_lines()
-        draw_grid(grid)
-        draw_block_n_prediction(curr_block, x, y, grid.shape)
+        if mode == 1:
+            draw_grid(grid)
+            draw_block_n_prediction(curr_block, x, y, grid.shape)
+        elif mode == 2:
+            draw_grid(grids[curr_game])
+            draw_block_n_prediction2(
+                curr_blocks[curr_game],
+                X_arr[curr_game],
+                Y_arr[curr_game],
+                grids[curr_game].shape)
         WIN.blit(GAME, (0, 0))
 
         pygame.display.update()
@@ -421,4 +536,4 @@ def tetris(mode):
 
 
 if __name__ == '__main__':
-    tetris(1)
+    tetris(2)
