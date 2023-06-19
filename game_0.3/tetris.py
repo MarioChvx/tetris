@@ -310,11 +310,11 @@ def check_movement(event, x, y, blocks, grid):
     return x, y
 
 
-def check_movement2(event, game_index):
+def check_movement2(event, game_index, n):
     if event.key in [pygame.K_LEFT, ord('a'), ord('A')]:
-        game_index = 100 if game_index == 0 else game_index - 1
+        game_index = n if game_index == 0 else game_index - 1
     elif event.key in [pygame.K_RIGHT, ord('d'), ord('D')]:
-        game_index = 0 if game_index == 100 else game_index + 1
+        game_index = 0 if game_index == n else game_index + 1
     return game_index
 
 
@@ -431,7 +431,7 @@ def tetris(mode):
                     x, y = check_movement(event, x, y, queue_blocks, grid.shape)
                     curr_block = queue_blocks[0]
                 elif mode == 2:
-                    curr_game = check_movement2(event, curr_game)
+                    curr_game = check_movement2(event, curr_game, len(grids) - 1)
                     grid = grids[curr_game]
                     x, y = X_arr[curr_game], Y_arr[curr_game]
 
@@ -465,16 +465,14 @@ def tetris(mode):
                     return
         elif mode == 2:
             for i, grid in enumerate(grids):
-                if score < 1:
+                if len(grids) > 5:
                     posibilites = list()
                     posibilites.extend(gen_all_posibilites(0, queues_blocks[i][0], grids[i].shape))
                     posibilites.extend(gen_all_posibilites(1, queues_blocks[i][1], grids[i].shape))
+                    random.shuffle(posibilites)
                     posibilites = list(map(score_possibility, posibilites))
                     posibilites = [eval_possibility(posibilites[j], vectors[i]) for j in range(len(posibilites))] 
                     best_move = max(posibilites, key=lambda p: p['eval'])
-                    print(i)
-                    print(best_move)
-                    print_grid(queues_blocks[i][best_move['a']].short_shape)
                     X_arr[i] = best_move['moves']
                     for _ in range(best_move['turns']):
                         queues_blocks[i][best_move['a']].short_shape = rotate_matrix(queues_blocks[i][best_move['a']].short_shape)
@@ -498,7 +496,11 @@ def tetris(mode):
                         Y_arr.pop(i)
                         vectors.pop(i)
                         pass
-            fail()
+                else:
+                    # merge vectors
+                    # create sons of vectors
+                    # restart games with new vectors
+                    pass
             score += 1
 
 
@@ -525,7 +527,7 @@ def tetris(mode):
         elif mode == 2:
             draw_grid(grids[curr_game])
             draw_block_n_prediction2(
-                curr_blocks[curr_game],
+                queues_blocks[curr_game][0],
                 X_arr[curr_game],
                 Y_arr[curr_game],
                 grids[curr_game].shape)
