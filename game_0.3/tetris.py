@@ -188,6 +188,18 @@ def calculate_holes(grid):
     return holes
 
 
+def mean_height(grid):
+    grid = rotate_matrix(grid)
+    res = list()
+    for col in grid:
+        col = list(reversed(col))
+        for i, n in enumerate(col):
+            if n == 1:
+                res.append(i)
+    
+    return sum(res) / len(res) if len(res) > 0 else 0
+
+
 def calculate_scores(grid):
     max_height = 0
     fillness = 0
@@ -201,7 +213,8 @@ def calculate_scores(grid):
     return (max_height,
             fillness / (max_height * len(grid[0])) if max_height > 0 else 0,
             calculate_holes(grid),
-            len(check_full_rows(grid)))
+            len(check_full_rows(grid)),
+            mean_height(grid))
 
 
 def merge_block(block, x, y, grid):
@@ -381,26 +394,45 @@ def gen_all_posibilites(a, block, grid) -> list:
 def score_possibility(possibility: dict):
     t = possibility.copy()
     t['scores'] = calculate_scores(t['shape'])
-    t.pop('shape')
+    # t.pop('shape')
     return t
 
 
 def eval_possibility(possibility: dict, weights: list):
     t = possibility.copy()
     t['eval'] = sum([t['scores'][i] + weights[i] for i in range(4)])
-    t.pop('scores')
+    # t.pop('scores')
     return t
 
 
-def gen_vector():
-    return (random.uniform(-10, 0),
-            random.uniform(0, 10),
-            random.uniform(-10, 0),
-            random.uniform(0, 10))
+def manual_selection(posibilites: list()):
+    ...
+
+
+def gen_vector(n):
+    return [random.uniform(-10, 10) for _ in range(n)]
+
+
+def merge_vectors(vectors: list):
+    n = len(vectors)
+    m = len(vectors[0])
+    res = [0] * m
+    for v in vectors:
+        for w in range(m):
+            res[w] = v[w]
+    return [r / n for r in res]
+
+
+def noise_vector(vector: list, strength: float):
+    res = list()
+    for w in vector:
+        noise = random.uniform(-strength, strength)
+        res.append(w + noise)
+    return res
 
 
 def tetris(mode):
-    g = 1000
+    g = 100
     pygame.time.set_timer(FALL_TIMER, g)
     clock = pygame.time.Clock()
     score = 0
@@ -411,13 +443,21 @@ def tetris(mode):
         grid = Grid(new_matrix(GRID_HEIGHT, GRID_WIDTH), new_matrix(GRID_HEIGHT, GRID_WIDTH, None))
         x, y = GRID_WIDTH // 2 - len(curr_block.shape) // 2, 0
     elif mode == 2:
+        quantity_games = 500
         gen = 0
-        queues_blocks = [create_blocks() for _ in range(100)]
-        curr_blocks = [queues_blocks[i][0] for i in range(100)]
-        vectors = [gen_vector() for _ in range(100)]
-        grids = [Grid(new_matrix(GRID_HEIGHT, GRID_WIDTH), new_matrix(GRID_HEIGHT, GRID_WIDTH, None)) for _ in range(100)]
-        X_arr, Y_arr = [0] * 100, [0] * 100
+        queues_blocks = [create_blocks() for _ in range(quantity_games)]
+            # return (max_height,
+            # fillness / (max_height * len(grid[0])) if max_height > 0 else 0,
+            # calculate_holes(grid),
+            # len(check_full_rows(grid)),
+            # mean_height(grid))
+        # vectors = [gen_vector(5) for _ in range(quantity_games)]
+        vectors = [noise_vector([-15, 5, -5, 15, -10], 1) for _ in range(quantity_games)]
+        curr_blocks = [queues_blocks[i][0] for i in range(quantity_games)]
+        grids = [Grid(new_matrix(GRID_HEIGHT, GRID_WIDTH), new_matrix(GRID_HEIGHT, GRID_WIDTH, None)) for _ in range(quantity_games)]
+        X_arr, Y_arr = [0] * quantity_games, [0] * quantity_games
         curr_game = 0
+        generation = 0
 
     while True:
         for event in pygame.event.get():
@@ -464,20 +504,27 @@ def tetris(mode):
                     pygame.display.update()
                     return
         elif mode == 2:
-            for i, grid in enumerate(grids):
-                if len(grids) > 5:
+            if len(grids) > 200:
+                for i, grid in enumerate(grids):
                     posibilites = list()
                     posibilites.extend(gen_all_posibilites(0, queues_blocks[i][0], grids[i].shape))
                     posibilites.extend(gen_all_posibilites(1, queues_blocks[i][1], grids[i].shape))
                     random.shuffle(posibilites)
+                    # test1 = [p['shape'] for p in posibilites]
                     posibilites = list(map(score_possibility, posibilites))
                     posibilites = [eval_possibility(posibilites[j], vectors[i]) for j in range(len(posibilites))] 
+                    # test2 = [p['eval'] for p in posibilites]
                     best_move = max(posibilites, key=lambda p: p['eval'])
+                    # print(best_move['eval'])
+                    # fail()
+                    # if score > 3 and i == 0:
+                    #     for p in posibilites:
+                    #         print_grid(p['shape'])
+                    #         print(p['eval'])
+                    #     fail()
                     X_arr[i] = best_move['moves']
                     for _ in range(best_move['turns']):
                         queues_blocks[i][best_move['a']].short_shape = rotate_matrix(queues_blocks[i][best_move['a']].short_shape)
-                        
-                    
                     merge_block2(queues_blocks[i][best_move['a']], X_arr[i], best_move['y'], grids[i])
                     queues_blocks[i].pop(best_move['a'])
                     fill_blocks(queues_blocks[i])
@@ -496,12 +543,29 @@ def tetris(mode):
                         Y_arr.pop(i)
                         vectors.pop(i)
                         pass
-                else:
-                    # merge vectors
-                    # create sons of vectors
-                    # restart games with new vectors
-                    pass
-            score += 1
+                score += 1
+            elif generation < 10:
+                generation += 1
+                # merge vectors
+                # print_grid(vectors)
+                father_vector = merge_vectors(vectors)
+                # create sons of vectors
+                vectors = [noise_vector(father_vector, .1) for _ in range(quantity_games)]
+                print(score)
+                print(f'{generation} -> {father_vector}')
+                # print(quantity_games)
+                # print(len(vectors))
+                # for i, v in enumerate(vectors):
+                #     print(i, v, sep=' -> ')
+                # restart games with new vectors
+                queues_blocks = [create_blocks() for _ in range(quantity_games)]
+                curr_blocks = [queues_blocks[i][0] for i in range(quantity_games)]
+                vectors = [gen_vector(5) for _ in range(quantity_games)]
+                grids = [Grid(new_matrix(GRID_HEIGHT, GRID_WIDTH), new_matrix(GRID_HEIGHT, GRID_WIDTH, None)) for _ in range(quantity_games)]
+                X_arr, Y_arr = [0] * quantity_games, [0] * quantity_games
+                curr_game = 0
+                score = 0
+                pass
 
 
         # Draw game
