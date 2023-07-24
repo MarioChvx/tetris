@@ -459,7 +459,7 @@ def move_to_key(move: dict) -> list:
     return keys
 
 
-def tetris(mode):
+def mode1(mode):
     paused = False
     g = 1000
     pygame.time.set_timer(FALL_TIMER, g)
@@ -684,6 +684,9 @@ def tetris(mode):
 
             pygame.display.update()
             clock.tick(60)
+
+def mode2():
+    ...
 
 
 if __name__ == '__main__':
