@@ -458,8 +458,8 @@ def move_to_key(move: dict) -> list:
     keys.append('y')
     return keys
 
+def main(mode = 0):
 
-def mode1(mode):
     paused = False
     g = 1000
     pygame.time.set_timer(FALL_TIMER, g)
@@ -467,6 +467,14 @@ def mode1(mode):
     clock = pygame.time.Clock()
     score = 0
 
+    if mode in [0, 1]:
+        mode1()
+    elif mode == 2:
+        mode2()
+    elif mode == 3:
+        mode2()
+
+def mode1(mode):
     if mode in [1, 3]:
         queue_blocks = create_blocks()
         curr_block = queue_blocks[0]
@@ -477,16 +485,6 @@ def mode1(mode):
             vector = [0.30597562095730596, 0.3289219430509858, 0.1927463043567247, -0.33222141617137524, 0.331751450080265]
             x, y = 0, 0
             calculated = False
-    elif mode == 2:
-        quantity_games = 100
-        gen = 0
-        queues_blocks = [create_blocks() for _ in range(quantity_games)]
-        vectors = [noise_vector([-15, 5, -5, 15, -10], 1) for _ in range(quantity_games)]
-        curr_blocks = [queues_blocks[i][0] for i in range(quantity_games)]
-        grids = [Grid(new_matrix(GRID_HEIGHT, GRID_WIDTH), new_matrix(GRID_HEIGHT, GRID_WIDTH, None)) for _ in range(quantity_games)]
-        X_arr, Y_arr = [0] * quantity_games, [0] * quantity_games
-        curr_game = 0
-        generation = 0
 
     while True:
         for event in pygame.event.get():
@@ -686,8 +684,118 @@ def mode1(mode):
             clock.tick(60)
 
 def mode2():
-    ...
+    quantity_games = 100
+    gen = 0
+    queues_blocks = [create_blocks() for _ in range(quantity_games)]
+    vectors = [noise_vector([-15, 5, -5, 15, -10], 1) for _ in range(quantity_games)]
+    curr_blocks = [queues_blocks[i][0] for i in range(quantity_games)]
+    grids = [Grid(new_matrix(GRID_HEIGHT, GRID_WIDTH), new_matrix(GRID_HEIGHT, GRID_WIDTH, None)) for _ in range(quantity_games)]
+    X_arr, Y_arr = [0] * quantity_games, [0] * quantity_games
+    curr_game = 0
+    generation = 0
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                return
+
+            if event.type == pygame.KEYDOWN:
+                check_mode(event, mode)
+                if event.key == pygame.K_ESCAPE:
+                    # paused = not paused
+                    ...
+                elif mode == 2:
+                    curr_game = check_movement2(event, curr_game, len(grids) - 1)
+                    grid = grids[curr_game]
+                    x, y = X_arr[curr_game], Y_arr[curr_game]
+
+            if event.type == FALL_TIMER:
+                    Y_arr = [y + 1 for y in Y_arr]
+                    pygame.time.set_timer(FALL_TIMER, g)
+            
+        if not paused:
+            if len(grids) > quantity_games * .2:
+                for i, grid in enumerate(grids):
+                    posibilites = list()
+                    posibilites.extend(gen_all_posibilites(0, queues_blocks[i][0], grids[i].shape))
+                    posibilites.extend(gen_all_posibilites(1, queues_blocks[i][1], grids[i].shape))
+                    posibilites = list(map(score_possibility, posibilites))
+                    posibilites = manual_selection(posibilites)
+                    posibilites = [eval_possibility(posibilites[j], vectors[i]) for j in range(len(posibilites))] 
+                    best_move = max(posibilites, key=lambda p: p['eval'])
+                    X_arr[i] = best_move['moves']
+                    for _ in range(best_move['turns']):
+                        queues_blocks[i][best_move['a']].short_shape = rotate_matrix(queues_blocks[i][best_move['a']].short_shape)
+                    merge_block2(queues_blocks[i][best_move['a']], X_arr[i], best_move['y'], grids[i])
+                    queues_blocks[i].pop(best_move['a'])
+                    fill_blocks(queues_blocks[i])
+                    full_rows = check_full_rows(grids[i].shape)
+                    if full_rows:
+                        for row in full_rows:
+                            remove_row(grids[i], row)
+                    score += len(full_rows)
+                    curr_blocks[i] = queues_blocks[i][0]
+                    X_arr[i], Y_arr[i] = 0, 0
+                    if check_collision(curr_blocks[i].shape, X_arr[i], Y_arr[i], grids[i].shape):
+                        grids.pop(i)
+                        queues_blocks.pop(i)
+                        curr_blocks.pop(i)
+                        X_arr.pop(i)
+                        Y_arr.pop(i)
+                        vectors.pop(i)
+                        pass
+                score += 1
+            elif generation < 100:
+                generation += 1
+                # merge vectors
+                # print_grid(vectors)
+                father_vector = merge_vectors(vectors)
+                # create sons of vectors
+                vectors = [noise_vector(father_vector, .1) for _ in range(quantity_games)]
+                print(score)
+                print(f'{generation} -> {father_vector}')
+                # print(quantity_games)
+                # print(len(vectors))
+                # for i, v in enumerate(vectors):
+                #     print(i, v, sep=' -> ')
+                # restart games with new vectors
+                queues_blocks = [create_blocks() for _ in range(quantity_games)]
+                curr_blocks = [queues_blocks[i][0] for i in range(quantity_games)]
+                vectors = [gen_vector(5) for _ in range(quantity_games)]
+                grids = [Grid(new_matrix(GRID_HEIGHT, GRID_WIDTH), new_matrix(GRID_HEIGHT, GRID_WIDTH, None)) for _ in range(quantity_games)]
+                X_arr, Y_arr = [0] * quantity_games, [0] * quantity_games
+                curr_game = 0
+                score = 0
+
+            # Draw game
+            WIN.fill(BLACK)
+
+            STATS.fill(BLACK)
+            draw_stats_lines(STATS)
+            draw_mode(STATS, mode)
+            if mode in [1, 3]:
+                draw_next_block(STATS, queue_blocks[1])
+                draw_scores(STATS, score, g, calculate_scores(grid.shape))
+            elif mode == 2:
+                draw_next_block(STATS, queues_blocks[curr_game][1])
+                draw_scores(STATS, score, g, calculate_scores(grids[curr_game].shape))
+                draw_curr_game(STATS, curr_game)
+            WIN.blit(STATS, (400, 0))
+
+            GAME.fill(BLACK)
+            draw_grid_lines()
+            draw_grid(grids[curr_game])
+            draw_block_n_prediction2(
+                queues_blocks[curr_game][0],
+                X_arr[curr_game],
+                Y_arr[curr_game],
+                grids[curr_game].shape)
+            WIN.blit(GAME, (0, 0))
+
+            pygame.display.update()
+            clock.tick(60)
 
 
 if __name__ == '__main__':
-    tetris(3)
+    main()
