@@ -650,12 +650,12 @@ def mode2():
             clock.tick(60)
 
 def mode3(mode):
-        queue_blocks = create_blocks()
-        curr_block = queue_blocks[0]
-        grid = Grid(new_matrix(GRID_HEIGHT, GRID_WIDTH), new_matrix(GRID_HEIGHT, GRID_WIDTH, None))
-        vector = [0.30597562095730596, 0.3289219430509858, 0.1927463043567247, -0.33222141617137524, 0.331751450080265]
-        x, y = 0, 0
-        calculated = False
+    queue_blocks = create_blocks()
+    curr_block = queue_blocks[0]
+    grid = Grid(new_matrix(GRID_HEIGHT, GRID_WIDTH), new_matrix(GRID_HEIGHT, GRID_WIDTH, None))
+    vector = [0.30597562095730596, 0.3289219430509858, 0.1927463043567247, -0.33222141617137524, 0.331751450080265]
+    x, y = 0, 0
+    calculated = False
 
     while True:
         for event in pygame.event.get():
@@ -664,13 +664,11 @@ def mode3(mode):
                 return
 
             if event.type == pygame.KEYDOWN:
-                check_mode(event, mode)
-                if event.key == pygame.K_ESCAPE:
+                # if event.key == pygame.K_ESCAPE:
                     # paused = not paused
-                    ...
+                    # ...
                     # check_movement
                 curr_block = queue_blocks[0]
-                    ...
 
             if event.type == FALL_TIMER:
                 y += 1
